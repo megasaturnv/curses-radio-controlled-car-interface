@@ -5,9 +5,12 @@
 ##############
 
 # Debug settings
-DEBUG_VERBOSE_MODE=True
-FAKE_AN_ARDUINO=True
-FAKE_RASPBERRYPI_GPIO=True
+DEBUG_VERBOSE_MODE    = True
+FAKE_AN_ARDUINO       = True
+FAKE_RASPBERRYPI_GPIO = True
+
+# Nanpy settings
+SERIAL_PORT = '/dev/serial0'
 
 # Key states
 KEY_Q = False
@@ -35,44 +38,44 @@ KEY_8 = False
 KEY_9 = False
 KEY_0 = False
 
-KEY_ESCAPE = False
-KEY_ENTER  = False
-KEY_BACKSPACE  = False
-KEY_SPACE  = False
+KEY_ESCAPE    = False
+KEY_ENTER     = False
+KEY_BACKSPACE = False
+KEY_SPACE     = False
 
 # Raspberry Pi GPIO pins
-RPI_I2C_SDA = 2
-RPI_I2C_SCL = 3
-SPEAKER_1_GPIO = 12
-SPEAKER_2_GPIO = 13
-HULL_INDICATOR_LEFT_GPIO = 27
+RPI_I2C_SDA               = 2
+RPI_I2C_SCL               = 3
+SPEAKER_1_GPIO            = 12
+SPEAKER_2_GPIO            = 13
+HULL_INDICATOR_LEFT_GPIO  = 27
 HULL_INDICATOR_RIGHT_GPIO = 23
-GUN_FIRE_GPIO = 24
-RPI_UART_TX = 14
-RPI_UART_RX = 15
-RPI_DTR = 17
+GUN_FIRE_GPIO             = 24
+RPI_UART_TX               = 14
+RPI_UART_RX               = 15
+RPI_DTR                   = 17
 
 # Arduino pins
-GUN_FIRE_READY_PIN = 2
-TURRET_LIGHTS_PIN = 3
-CAMERA_IR_CONTROL_PIN = 11
+GUN_FIRE_READY_PIN            = 2
+TURRET_LIGHTS_PIN             = 3
+CAMERA_IR_CONTROL_PIN         = 11
 BATTERY_VOLTAGE_LIION_RPI_PIN = 20 #A6
 BATTERY_VOLTAGE_LIION_1X3_PIN = 17 #A3
 BATTERY_VOLTAGE_LIION_2X3_PIN = 21 #A7
 
-TRACK_RIGHT_PWM_PIN = 10
-TRACK_RIGHT_FORWARD_PIN = 13
+TRACK_RIGHT_PWM_PIN      = 10
+TRACK_RIGHT_FORWARD_PIN  = 13
 TRACK_RIGHT_BACKWARD_PIN = 14 #(A0)
-TRACK_LEFT_PWM_PIN = 6
-TRACK_LEFT_FORWARD_PIN = 16 #(A2)
-TRACK_LEFT_BACKWARD_PIN = 15 #(A1)
+TRACK_LEFT_PWM_PIN       = 6
+TRACK_LEFT_FORWARD_PIN   = 16 #(A2)
+TRACK_LEFT_BACKWARD_PIN  = 15 #(A1)
 
 TURRET_X_PWM_PIN = 5
-TURRET_LEFT_PIN = 7
+TURRET_LEFT_PIN  = 7
 TURRET_RIGHT_PIN = 4
 TURRET_Y_PWM_PIN = 9
-TURRET_UP_PIN = 12
-TURRET_DOWN_PIN = 8
+TURRET_UP_PIN    = 12
+TURRET_DOWN_PIN  = 8
 
 
 ######################
@@ -90,7 +93,7 @@ logTotal = 1
 #############
 
 if not FAKE_AN_ARDUINO:
-	import nanpy
+	import nanpy, nanpy.arduinotree
 
 if not FAKE_RASPBERRYPI_GPIO:
 	import RPi.GPIO as GPIO
@@ -237,38 +240,38 @@ def printButtonInformation(windowButtonInformation):
 	curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 	curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
-	printButton(windowButtonInformation, 2, 2,  'Q', False)
-	printButton(windowButtonInformation, 6, 2,  'A', False)
+	printButton(windowButtonInformation, 2, 2,  'Q', KEY_Q)
+	printButton(windowButtonInformation, 6, 2,  'A', KEY_A)
 
-	printButton(windowButtonInformation, 2, 10, 'E', False)
-	printButton(windowButtonInformation, 6, 6,  'S', False)
-	printButton(windowButtonInformation, 6, 10, 'D', False)
-	printButton(windowButtonInformation, 6, 14, 'F', False)
+	printButton(windowButtonInformation, 2, 10, 'E', KEY_E)
+	printButton(windowButtonInformation, 6, 6,  'S', KEY_S)
+	printButton(windowButtonInformation, 6, 10, 'D', KEY_D)
+	printButton(windowButtonInformation, 6, 14, 'F', KEY_F)
 
-	printButton(windowButtonInformation, 2, 18, 'T', False)
-	printButton(windowButtonInformation, 6, 18, 'G', False)
+	printButton(windowButtonInformation, 2, 18, 'T', KEY_T)
+	printButton(windowButtonInformation, 6, 18, 'G', KEY_G)
 
-	printButton(windowButtonInformation, 2, 30, 'I', False)
-	printButton(windowButtonInformation, 6, 26, 'J', False)
-	printButton(windowButtonInformation, 6, 30, 'K', False)
-	printButton(windowButtonInformation, 6, 34, 'L', False)
+	printButton(windowButtonInformation, 2, 30, 'I', KEY_I)
+	printButton(windowButtonInformation, 6, 26, 'J', KEY_J)
+	printButton(windowButtonInformation, 6, 30, 'K', KEY_K)
+	printButton(windowButtonInformation, 6, 34, 'L', KEY_L)
 	
-	printButton(windowButtonInformation, 2, 46, '1', False)
-	printButton(windowButtonInformation, 2, 50, '2', False)
-	printButton(windowButtonInformation, 2, 54, '3', False)
-	printButton(windowButtonInformation, 2, 58, '4', False)
-	printButton(windowButtonInformation, 2, 62, '5', False)
+	printButton(windowButtonInformation, 2, 46, '1', KEY_1)
+	printButton(windowButtonInformation, 2, 50, '2', KEY_2)
+	printButton(windowButtonInformation, 2, 54, '3', KEY_3)
+	printButton(windowButtonInformation, 2, 58, '4', KEY_4)
+	printButton(windowButtonInformation, 2, 62, '5', KEY_5)
 
-	printButton(windowButtonInformation, 6, 46, '6', False)
-	printButton(windowButtonInformation, 6, 50, '7', False)
-	printButton(windowButtonInformation, 6, 54, '8', False)
-	printButton(windowButtonInformation, 6, 58, '9', False)
-	printButton(windowButtonInformation, 6, 62, '0', False)
+	printButton(windowButtonInformation, 6, 46, '6', KEY_6)
+	printButton(windowButtonInformation, 6, 50, '7', KEY_7)
+	printButton(windowButtonInformation, 6, 54, '8', KEY_8)
+	printButton(windowButtonInformation, 6, 58, '9', KEY_9)
+	printButton(windowButtonInformation, 6, 62, '0', KEY_0)
 	
-	printButton(windowButtonInformation, 2, 74, 'Escape',    False)
-	printButton(windowButtonInformation, 6, 74, 'Enter',     False)
-	printButton(windowButtonInformation, 2, 83, 'Backspace', False)
-	printButton(windowButtonInformation, 6, 83, 'Space',     False)
+	printButton(windowButtonInformation, 2, 74, 'Escape',    KEY_ESCAPE)
+	printButton(windowButtonInformation, 6, 74, 'Enter',     KEY_ENTER)
+	printButton(windowButtonInformation, 2, 83, 'Backspace', KEY_BACKSPACE)
+	printButton(windowButtonInformation, 6, 83, 'Space',     KEY_SPACE)
 
 	windowButtonInformation.refresh()
 
@@ -393,16 +396,15 @@ def main_curses(stdscr):
 
 		stdscr.refresh()
 
-		printToLogDebug(windowLog, str(x))
-		printToLogDebug(windowLog, ':')
-		printToLogDebug(windowLog, str(y))
+		printToLogDebug(windowLog, str(x) + 'x' + str(y))
+		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
+		printToLog(windowLog, 'Curses started')
 
-		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4)
-
-		for i in range(1, 51):
-			printToLog(windowLog, 'Dummy log entry no. ' + str(i))
-			time.sleep(0.05)
-
+		if not FAKE_AN_ARDUINO:
+			connection = nanpy.SerialManager(device=SERIAL_PORT)
+			aa = nanpy.ArduinoApi(connection=connection)
+			at = nanpy.arduinotree.ArduinoTree(connection=connection)
+		
 		time.sleep(5)
 	else:
 		endCurses()
