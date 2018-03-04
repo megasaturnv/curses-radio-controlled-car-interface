@@ -105,14 +105,6 @@ def printButtonInformation(windowButtonInformation):
 
 	curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 	curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)
-	
-	windowButtonInformation.addstr(2, 2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
-	windowButtonInformation.addstr(3, 2, '#Q#     #E#     #T#         #I#             #1# #2# #3# #4# #5#         #Escape#', curses.color_pair(4))
-	windowButtonInformation.addstr(4, 2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
-
-	windowButtonInformation.addstr(6, 2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######',  curses.color_pair(4))
-	windowButtonInformation.addstr(7, 2, '#A# #S# #D# #F# #G#     #J# #K# #L#         #6# #7# #8# #9# #0#         #Enter#',  curses.color_pair(4))
-	windowButtonInformation.addstr(8, 2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######',  curses.color_pair(4))
 
 	printButton(windowButtonInformation, 2, 2,  'Q', True)
 	printButton(windowButtonInformation, 6, 2,  'A', True)
