@@ -4,12 +4,12 @@
 ## SETTINGS ##
 ##############
 
-#Debug settings
+# Debug settings
 DEBUG_VERBOSE_MODE=True
 FAKE_AN_ARDUINO=True
 FAKE_RASPBERRYPI_GPIO=True
 
-#Raspberry Pi GPIO pins
+# Raspberry Pi GPIO pins
 RPI_I2C_SDA = 2
 RPI_I2C_SCL = 3
 SPEAKER_1_GPIO = 12
@@ -21,7 +21,7 @@ RPI_UART_TX = 14
 RPI_UART_RX = 15
 RPI_DTR = 17
 
-#Arudino pins
+# Arduino pins
 GUN_FIRE_READY_PIN = 2
 TURRET_LIGHTS_PIN = 3
 CAMERA_IR_CONTROL_PIN = 11
@@ -65,6 +65,106 @@ if not FAKE_RASPBERRYPI_GPIO:
 	import RPi.GPIO as GPIO
 
 import curses, time
+
+
+#############################
+## ARDUINO NANPY FUNCTIONS ##
+#############################
+
+def trackLeftForward(speed):
+	printToLogDebug('trackLeftForward')
+	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
+	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+	aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+def trackLeftBackward(speed):
+	printToLogDebug('trackLeftBackward')
+	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
+	aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+def trackLeftStop():
+	printToLogDebug('trackLeftStop')
+	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+	aa.analogWrite(TRACK_LEFT_PWM_PIN, 0)
+
+def trackRightForward(speed):
+	printToLogDebug('trackRightForward')
+	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
+	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+	aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
+
+def trackRightBackward(speed):
+	printToLogDebug('trackRightBackward')
+	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
+	aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
+
+def trackRightStop():
+	printToLogDebug('trackRightStop')
+	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+	aa.analogWrite(TRACK_RIGHT_PWM_PIN, 0)
+
+def turretLeft(speed):
+	printToLogDebug('turretLeft')
+	aa.digitalWrite(TURRET_LEFT_PIN, aa.HIGH)
+	aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
+	aa.analogWrite(TURRET_X_PWM_PIN, speed)
+def turretRight(speed):
+	printToLogDebug('turretRight')
+	aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
+	aa.digitalWrite(TURRET_RIGHT_PIN, aa.HIGH)
+	aa.analogWrite(TURRET_X_PWM_PIN, speed)
+def turretXStop():
+	printToLogDebug('turretXStop')
+	aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
+	aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
+	aa.analogWrite(TURRET_X_PWM_PIN, 0)
+
+def turretUp(speed):
+	printToLogDebug('turretUp')
+	aa.digitalWrite(TURRET_UP_PIN, aa.HIGH)
+	aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+def turretDown(speed):
+	printToLogDebug('turretDown')
+	aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
+	aa.digitalWrite(TURRET_DOWN_PIN, aa.HIGH)
+def turretYStop():
+	printToLogDebug('turretYStop')
+	aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
+	aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+
+def fireGun():
+	printToLogDebug('Firing gun not implemented')
+
+def arduinoSetupPins():
+	printToLogDebug('Setting up pins')
+	#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
+	#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
+	#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
+	#aa.pinMode(TRACK_RIGHT_PWM_PIN, aa.OUTPUT)
+	aa.pinMode(TRACK_RIGHT_FORWARD_PIN, aa.OUTPUT)
+	#aa.pinMode(TRACK_RIGHT_BACKWARD_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_X_PWM_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_LEFT_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_RIGHT_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_Y_PWM_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_UP_PIN, aa.OUTPUT)
+	#aa.pinMode(TURRET_DOWN_PIN, aa.OUTPUT)
+
+def arduinoUnsetPins():
+	printToLogDebug("Setting pins to input, low")
+	for i in range(1,20):
+		aa.digitalWrite(i, aa.LOW)
+		aa.pinMode(i, aa.INPUT)
+		time.sleep(0.05)
+
+
+#################################
+## RASPBERRY PI GPIO FUNCTIONS ##
+#################################
+
+#WIP
 
 
 ######################
@@ -221,20 +321,6 @@ def printToLogDebug(windowLog, text):
 			print("Debug print error")
 			print("Text: " + str(text)) # Print text
 			time.sleep(2)
-
-
-#############################
-## ARDUINO NANPY FUNCTIONS ##
-#############################
-
-#WIP
-
-
-#################################
-## RASPBERRY PI GPIO FUNCTIONS ##
-#################################
-
-#WIP
 
 
 ##################
