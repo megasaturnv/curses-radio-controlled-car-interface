@@ -9,6 +9,37 @@ DEBUG_VERBOSE_MODE=True
 FAKE_AN_ARDUINO=True
 FAKE_RASPBERRYPI_GPIO=True
 
+# Key states
+KEY_Q = False
+KEY_A = False
+KEY_E = False
+KEY_S = False
+KEY_D = False
+KEY_F = False
+KEY_T = False
+KEY_G = False
+
+KEY_I = False
+KEY_J = False
+KEY_K = False
+KEY_L = False
+
+KEY_1 = False
+KEY_2 = False
+KEY_3 = False
+KEY_4 = False
+KEY_5 = False
+KEY_6 = False
+KEY_7 = False
+KEY_8 = False
+KEY_9 = False
+KEY_0 = False
+
+KEY_ESCAPE = False
+KEY_ENTER  = False
+KEY_BACKSPACE  = False
+KEY_SPACE  = False
+
 # Raspberry Pi GPIO pins
 RPI_I2C_SDA = 2
 RPI_I2C_SCL = 3
@@ -234,8 +265,10 @@ def printButtonInformation(windowButtonInformation):
 	printButton(windowButtonInformation, 6, 58, '9', False)
 	printButton(windowButtonInformation, 6, 62, '0', False)
 	
-	printButton(windowButtonInformation, 2, 74, 'Escape', False)
-	printButton(windowButtonInformation, 6, 74, 'Enter',  False)
+	printButton(windowButtonInformation, 2, 74, 'Escape',    False)
+	printButton(windowButtonInformation, 6, 74, 'Enter',     False)
+	printButton(windowButtonInformation, 2, 83, 'Backspace', False)
+	printButton(windowButtonInformation, 6, 83, 'Space',     False)
 
 	windowButtonInformation.refresh()
 
