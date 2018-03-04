@@ -367,11 +367,11 @@ def main_curses(stdscr):
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
 	#curses.use_default_colors() # Use default curses colours
-	curses.noecho()      # Don't echo keystrokes
-	curses.cbreak()      # Don't wait for enter, handle keys immediately
-	stdscr.keypad(True)  # Use aliases for special keys
-	curses.curs_set(1)   # Supress the blinking cursor
-	stdscr.nodelay(True) # Set getch() and getkey() to non-blocking
+	curses.noecho()        # Don't echo keystrokes
+	curses.cbreak()        # Don't wait for enter, handle keys immediately
+	stdscr.keypad(True)    # Use aliases for special keys
+	curses.curs_set(False) # Suppress the blinking cursor
+	stdscr.nodelay(True)   # Set getch() and getkey() to non-blocking
 
 	if checkCursesWindowSize(stdscr):
 		y, x = stdscr.getmaxyx()
@@ -396,9 +396,10 @@ def main_curses(stdscr):
 
 		stdscr.refresh()
 
-		printToLogDebug(windowLog, str(x) + 'x' + str(y))
-		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
 		printToLog(windowLog, 'Curses started')
+		printToLogDebug(windowLog, 'Terminal size: ' + str(x) + 'x' + str(y))
+		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
+		
 
 		if not FAKE_AN_ARDUINO:
 			connection = nanpy.SerialManager(device=SERIAL_PORT)
