@@ -105,45 +105,45 @@ def printButtonInformation(windowButtonInformation):
 
 	curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 	curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)
-	windowButtonInformation.addstr(2,2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
-	windowButtonInformation.addstr(3,2, '#Q#     #E#     #T#         #I#             #1# #2# #3# #4# #5#         #Escape#', curses.color_pair(4))
-	windowButtonInformation.addstr(4,2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
-
-	windowButtonInformation.addstr(6,2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######', curses.color_pair(4))
-	windowButtonInformation.addstr(7,2, '#A# #S# #D# #F# #G#     #J# #K# #L#         #6# #7# #8# #9# #0#         #Enter#', curses.color_pair(4))
-	windowButtonInformation.addstr(8,2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######', curses.color_pair(4))
-
-	printButton(windowButtonInformation, 2, 2,   'Q', True)
-	printButton(windowButtonInformation, 6, 2,   'A', True)
-
-	printButton(windowButtonInformation, 2, 10,  'E', True)
-	printButton(windowButtonInformation, 6, 6,   'S', True)
-	printButton(windowButtonInformation, 6, 10,  'D', True)
-	printButton(windowButtonInformation, 6, 14,  'F', True)
-
-	#WIP#
-	#printButton(windowButtonInformation, 4, 130, 'T', True)
-	#printButton(windowButtonInformation, 4, 130, 'G', True)
-
-	#printButton(windowButtonInformation, 4, 130, 'I', True)
-	#printButton(windowButtonInformation, 4, 130, 'J', True)
-	#printButton(windowButtonInformation, 4, 130, 'K', True)
-	#printButton(windowButtonInformation, 4, 130, 'L', True)
 	
-	#printButton(windowButtonInformation, 4, 130, '1', True)
-	#printButton(windowButtonInformation, 4, 130, '2', True)
-	#printButton(windowButtonInformation, 4, 130, '3', True)
-	#printButton(windowButtonInformation, 4, 130, '4', True)
-	#printButton(windowButtonInformation, 4, 130, '5', True)
+	windowButtonInformation.addstr(2, 2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
+	windowButtonInformation.addstr(3, 2, '#Q#     #E#     #T#         #I#             #1# #2# #3# #4# #5#         #Escape#', curses.color_pair(4))
+	windowButtonInformation.addstr(4, 2, '###     ###     ###         ###             ### ### ### ### ###         ########', curses.color_pair(4))
 
-	#printButton(windowButtonInformation, 4, 130, '6', True)
-	#printButton(windowButtonInformation, 4, 130, '7', True)
-	#printButton(windowButtonInformation, 4, 130, '8', True)
-	#printButton(windowButtonInformation, 4, 130, '9', True)
-	#printButton(windowButtonInformation, 4, 130, '0', True)
+	windowButtonInformation.addstr(6, 2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######',  curses.color_pair(4))
+	windowButtonInformation.addstr(7, 2, '#A# #S# #D# #F# #G#     #J# #K# #L#         #6# #7# #8# #9# #0#         #Enter#',  curses.color_pair(4))
+	windowButtonInformation.addstr(8, 2, '### ### ### ### ###     ### ### ###         ### ### ### ### ###         #######',  curses.color_pair(4))
+
+	printButton(windowButtonInformation, 2, 2,  'Q', True)
+	printButton(windowButtonInformation, 6, 2,  'A', True)
+
+	printButton(windowButtonInformation, 2, 10, 'E', True)
+	printButton(windowButtonInformation, 6, 6,  'S', True)
+	printButton(windowButtonInformation, 6, 10, 'D', True)
+	printButton(windowButtonInformation, 6, 14, 'F', True)
+
+	printButton(windowButtonInformation, 2, 18, 'T', True)
+	printButton(windowButtonInformation, 6, 18, 'G', True)
+
+	printButton(windowButtonInformation, 2, 30, 'I', True)
+	printButton(windowButtonInformation, 6, 26, 'J', True)
+	printButton(windowButtonInformation, 6, 30, 'K', True)
+	printButton(windowButtonInformation, 6, 34, 'L', True)
 	
-	#printButton(windowButtonInformation, 4, 130, 'Escape', True)
-	#printButton(windowButtonInformation, 4, 130, 'Enter', True)
+	printButton(windowButtonInformation, 2, 46, '1', True)
+	printButton(windowButtonInformation, 2, 50, '2', True)
+	printButton(windowButtonInformation, 2, 54, '3', True)
+	printButton(windowButtonInformation, 2, 58, '4', True)
+	printButton(windowButtonInformation, 2, 62, '5', True)
+
+	printButton(windowButtonInformation, 6, 46, '6', True)
+	printButton(windowButtonInformation, 6, 50, '7', True)
+	printButton(windowButtonInformation, 6, 54, '8', True)
+	printButton(windowButtonInformation, 6, 58, '9', True)
+	printButton(windowButtonInformation, 6, 62, '0', True)
+	
+	printButton(windowButtonInformation, 2, 74, 'Escape', True)
+	printButton(windowButtonInformation, 6, 74, 'Enter', True)
 
 	windowButtonInformation.refresh()
 
