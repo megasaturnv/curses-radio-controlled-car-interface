@@ -401,7 +401,7 @@ def main_curses(stdscr):
 
 		# Main program loop
 		while mainLoop:
-			time.sleep(0.3)
+			time.sleep(1)
 			
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
@@ -558,8 +558,6 @@ def main_curses(stdscr):
 		print('Curses window is too small')
 		print('Minimum size is ' + str(CURSES_WINDOW_MIN_X) + ' rows by ' + str(CURSES_WINDOW_MIN_Y) + ' lines')
 		print('Current size is ' + str(stdscr.getmaxyx()[1]) + ' rows by ' + str(stdscr.getmaxyx()[0]) + ' lines')
-
-	time.sleep(5)
 
 if __name__ == "__main__":
 	try:
