@@ -463,6 +463,9 @@ def main_curses(stdscr):
 			if key != curses.ERR:
 				#stdscr.refresh()
 				if key == 27: # Esc key - quit
+					arduinoUnsetPins()
+					gpioUnsetPins()
+					printToLog(windowLog, 'All movement stopped and modules offline')
 					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
 					stdscr.nodelay(False) # Set getch() and getkey() to blocking
 					key = stdscr.getch()
@@ -476,6 +479,15 @@ def main_curses(stdscr):
 					printToLog(windowLog, 'All movement stopped and modules offline')
 					arduinoUnsetPins()
 					gpioUnsetPins()
+					stateTracksLeft = 0
+					stateTracksRight = 0
+					stateTurretHoriz = 0
+					stateTurretVert = 0
+					stateHullIndicatorLeft = False
+					stateHullIndicatorRight = False
+					stateGunFiring = False
+					stateTurretLights = False
+					stateCameraIR = False
 				elif key == 32: # Space bar - fire gun
 					stateGunFiring = True
 				elif key == ord('q'):
@@ -546,13 +558,13 @@ def main_curses(stdscr):
 						stateTurretHoriz = 0
 					else:
 						stateTurretHoriz = 1
+				else:
+					printToLog(windowLog, 'Warning: Pressed key not recognised: ' + chr(key) + ' = ' + str(key))
 
 			else:
-				if key == curses.ERR:
-					printToLogDebug(windowLog, 'No key pressed')
-				else:
-					printToLog(windowLog, 'Error: Pressed key not recognised')
+				printToLogDebug(windowLog, 'No key pressed')
 
+			key = -1
 	else:
 		endCurses()
 		print('Curses window is too small')
