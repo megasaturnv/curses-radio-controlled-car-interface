@@ -1,47 +1,20 @@
 #!/usr/bin/python3
 
-##############
-## SETTINGS ##
-##############
+##########################
+## SETTINGS (CONSTANTS) ##
+##########################
 
 # Debug settings
 DEBUG_VERBOSE_MODE    = True
 FAKE_AN_ARDUINO       = True
 FAKE_RASPBERRYPI_GPIO = True
 
+# Window size settings
+CURSES_WINDOW_MIN_X = 126
+CURSES_WINDOW_MIN_Y = 29
+
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0'
-
-# Key states
-KEY_Q = False
-KEY_A = False
-KEY_E = False
-KEY_S = False
-KEY_D = False
-KEY_F = False
-KEY_T = False
-KEY_G = False
-
-KEY_I = False
-KEY_J = False
-KEY_K = False
-KEY_L = False
-
-KEY_1 = False
-KEY_2 = False
-KEY_3 = False
-KEY_4 = False
-KEY_5 = False
-KEY_6 = False
-KEY_7 = False
-KEY_8 = False
-KEY_9 = False
-KEY_0 = False
-
-KEY_ESCAPE    = False
-KEY_ENTER     = False
-KEY_BACKSPACE = False
-KEY_SPACE     = False
 
 # Raspberry Pi GPIO pins
 RPI_I2C_SDA               = 2
@@ -82,11 +55,21 @@ TURRET_DOWN_PIN  = 8
 ## GLOBAL VARIABLES ##
 ######################
 
-cursesWindowMinimumX = 126
-cursesWindowMinimumY = 29
 logY = 3
 logTotal = 1
+mainLoop = True
 
+# Vehicle states
+stateTracksLeft  = 0 # 0 = stopped. -1 = backwards.      1 = forwards
+stateTracksRight = 0 # 0 = stopped. -1 = backwards.      1 = forwards
+stateTurretHoriz = 0 # 0 = stopped. -1 = anti-clockwise. 1 = clockwise
+stateTurretVert  = 0 # 0 = stopped. -1 = down.           1 = up
+
+stateHullIndicatorLeft  = False
+stateHullIndicatorRight = False
+stateGunFiring          = False
+stateTurretLights       = False
+stateCameraIR           = False
 
 #############
 ## IMPORTS ##
@@ -106,99 +89,106 @@ import curses, time
 #############################
 
 def trackLeftForward(speed):
-	printToLogDebug('trackLeftForward')
-	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
-	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-	aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
+		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
 def trackLeftBackward(speed):
-	printToLogDebug('trackLeftBackward')
-	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
-	aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
 def trackLeftStop():
-	printToLogDebug('trackLeftStop')
-	aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-	aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-	aa.analogWrite(TRACK_LEFT_PWM_PIN, 0)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, 0)
 
 def trackRightForward(speed):
-	printToLogDebug('trackRightForward')
-	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
-	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-	aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
+		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
 def trackRightBackward(speed):
-	printToLogDebug('trackRightBackward')
-	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
-	aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
 def trackRightStop():
-	printToLogDebug('trackRightStop')
-	aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-	aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-	aa.analogWrite(TRACK_RIGHT_PWM_PIN, 0)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, 0)
 
 def turretLeft(speed):
-	printToLogDebug('turretLeft')
-	aa.digitalWrite(TURRET_LEFT_PIN, aa.HIGH)
-	aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
-	aa.analogWrite(TURRET_X_PWM_PIN, speed)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_LEFT_PIN, aa.HIGH)
+		aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
+		aa.analogWrite(TURRET_X_PWM_PIN, speed)
 def turretRight(speed):
-	printToLogDebug('turretRight')
-	aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
-	aa.digitalWrite(TURRET_RIGHT_PIN, aa.HIGH)
-	aa.analogWrite(TURRET_X_PWM_PIN, speed)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_RIGHT_PIN, aa.HIGH)
+		aa.analogWrite(TURRET_X_PWM_PIN, speed)
 def turretXStop():
-	printToLogDebug('turretXStop')
-	aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
-	aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
-	aa.analogWrite(TURRET_X_PWM_PIN, 0)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
+		aa.analogWrite(TURRET_X_PWM_PIN, 0)
 
 def turretUp(speed):
-	printToLogDebug('turretUp')
-	aa.digitalWrite(TURRET_UP_PIN, aa.HIGH)
-	aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_UP_PIN, aa.HIGH)
+		aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+		aa.analogWrite(TURRET_Y_PWM_PIN, speed)
 def turretDown(speed):
-	printToLogDebug('turretDown')
-	aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
-	aa.digitalWrite(TURRET_DOWN_PIN, aa.HIGH)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_DOWN_PIN, aa.HIGH)
+		aa.analogWrite(TURRET_Y_PWM_PIN, speed)
 def turretYStop():
-	printToLogDebug('turretYStop')
-	aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
-	aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+		aa.analogWrite(TURRET_Y_PWM_PIN, 0)
 
 def fireGun():
-	printToLogDebug('Firing gun not implemented')
+	pass #Firing gun not implemented
 
 def arduinoSetupPins():
-	printToLogDebug('Setting up pins')
-	#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
-	#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
-	#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
-	#aa.pinMode(TRACK_RIGHT_PWM_PIN, aa.OUTPUT)
-	aa.pinMode(TRACK_RIGHT_FORWARD_PIN, aa.OUTPUT)
-	#aa.pinMode(TRACK_RIGHT_BACKWARD_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_X_PWM_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_LEFT_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_RIGHT_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_Y_PWM_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_UP_PIN, aa.OUTPUT)
-	#aa.pinMode(TURRET_DOWN_PIN, aa.OUTPUT)
+	if not FAKE_AN_ARDUINO:
+		#printToLogDebug('Setting up pins')
+		#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
+		#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
+		#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
+		#aa.pinMode(TRACK_RIGHT_PWM_PIN, aa.OUTPUT)
+		aa.pinMode(TRACK_RIGHT_FORWARD_PIN, aa.OUTPUT)
+		#aa.pinMode(TRACK_RIGHT_BACKWARD_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_X_PWM_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_LEFT_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_RIGHT_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_Y_PWM_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_UP_PIN, aa.OUTPUT)
+		#aa.pinMode(TURRET_DOWN_PIN, aa.OUTPUT)
 
-def arduinoUnsetPins():
-	printToLogDebug("Setting pins to input, low")
-	for i in range(1,20):
-		aa.digitalWrite(i, aa.LOW)
-		aa.pinMode(i, aa.INPUT)
-		time.sleep(0.05)
+def arduinoUnsetPins(): # Set Arduino pins to their default values
+	if not FAKE_AN_ARDUINO:
+		#printToLogDebug("Setting pins to input, low")
+		for i in range(1,20):
+			aa.digitalWrite(i, aa.LOW)
+			aa.pinMode(i, aa.INPUT)
+			time.sleep(0.05)
 
 
 #################################
 ## RASPBERRY PI GPIO FUNCTIONS ##
 #################################
 
-#WIP
+def gpioUnsetPins(): # Set Raspberry Pi GPIO pins to their default values
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+# Work in progress
 
 
 ######################
@@ -219,7 +209,7 @@ def endCurses():
 def checkCursesWindowSize(window):
 	#Minimum size is 126 columns x 29 lines
 	y, x = window.getmaxyx()
-	if y >= cursesWindowMinimumY and x >= cursesWindowMinimumX:
+	if y >= CURSES_WINDOW_MIN_Y and x >= CURSES_WINDOW_MIN_X:
 		return True
 	else:
 		return False
@@ -234,44 +224,44 @@ def printButton(window, startY, startX, text, status):
 	window.addstr(startY+1, startX, '#' + str(text) + '#', curses.color_pair(pairID))
 	window.addstr(startY+2, startX, '#'*(len(text)+2)    , curses.color_pair(pairID))
 
-def printButtonInformation(windowButtonInformation):
-	windowButtonInformation.addstr(1,1, 'Information')
+def printKeysInformation(windowButtonInformation):
+	windowButtonInformation.addstr(1,1, 'Keys information')
 
 	curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
 	curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)
 
-	printButton(windowButtonInformation, 2, 2,  'Q', KEY_Q)
-	printButton(windowButtonInformation, 6, 2,  'A', KEY_A)
+	printButton(windowButtonInformation, 2, 2,  'Q', False)
+	printButton(windowButtonInformation, 6, 2,  'A', False)
 
-	printButton(windowButtonInformation, 2, 10, 'E', KEY_E)
-	printButton(windowButtonInformation, 6, 6,  'S', KEY_S)
-	printButton(windowButtonInformation, 6, 10, 'D', KEY_D)
-	printButton(windowButtonInformation, 6, 14, 'F', KEY_F)
+	printButton(windowButtonInformation, 2, 10, 'E', False)
+	printButton(windowButtonInformation, 6, 6,  'S', False)
+	printButton(windowButtonInformation, 6, 10, 'D', False)
+	printButton(windowButtonInformation, 6, 14, 'F', False)
 
-	printButton(windowButtonInformation, 2, 18, 'T', KEY_T)
-	printButton(windowButtonInformation, 6, 18, 'G', KEY_G)
+	printButton(windowButtonInformation, 2, 18, 'T', False)
+	printButton(windowButtonInformation, 6, 18, 'G', False)
 
-	printButton(windowButtonInformation, 2, 30, 'I', KEY_I)
-	printButton(windowButtonInformation, 6, 26, 'J', KEY_J)
-	printButton(windowButtonInformation, 6, 30, 'K', KEY_K)
-	printButton(windowButtonInformation, 6, 34, 'L', KEY_L)
+	printButton(windowButtonInformation, 2, 30, 'I', False)
+	printButton(windowButtonInformation, 6, 26, 'J', False)
+	printButton(windowButtonInformation, 6, 30, 'K', False)
+	printButton(windowButtonInformation, 6, 34, 'L', False)
 	
-	printButton(windowButtonInformation, 2, 46, '1', KEY_1)
-	printButton(windowButtonInformation, 2, 50, '2', KEY_2)
-	printButton(windowButtonInformation, 2, 54, '3', KEY_3)
-	printButton(windowButtonInformation, 2, 58, '4', KEY_4)
-	printButton(windowButtonInformation, 2, 62, '5', KEY_5)
+	printButton(windowButtonInformation, 2, 46, '1', False)
+	printButton(windowButtonInformation, 2, 50, '2', False)
+	printButton(windowButtonInformation, 2, 54, '3', False)
+	printButton(windowButtonInformation, 2, 58, '4', False)
+	printButton(windowButtonInformation, 2, 62, '5', False)
 
-	printButton(windowButtonInformation, 6, 46, '6', KEY_6)
-	printButton(windowButtonInformation, 6, 50, '7', KEY_7)
-	printButton(windowButtonInformation, 6, 54, '8', KEY_8)
-	printButton(windowButtonInformation, 6, 58, '9', KEY_9)
-	printButton(windowButtonInformation, 6, 62, '0', KEY_0)
+	printButton(windowButtonInformation, 6, 46, '6', False)
+	printButton(windowButtonInformation, 6, 50, '7', False)
+	printButton(windowButtonInformation, 6, 54, '8', False)
+	printButton(windowButtonInformation, 6, 58, '9', False)
+	printButton(windowButtonInformation, 6, 62, '0', False)
 	
-	printButton(windowButtonInformation, 2, 74, 'Escape',    KEY_ESCAPE)
-	printButton(windowButtonInformation, 6, 74, 'Enter',     KEY_ENTER)
-	printButton(windowButtonInformation, 2, 83, 'Backspace', KEY_BACKSPACE)
-	printButton(windowButtonInformation, 6, 83, 'Space',     KEY_SPACE)
+	printButton(windowButtonInformation, 2, 74, 'Escape',    False)
+	printButton(windowButtonInformation, 6, 74, 'Enter',     False)
+	printButton(windowButtonInformation, 2, 83, 'Backspace', False)
+	printButton(windowButtonInformation, 6, 83, 'Space',     False)
 
 	windowButtonInformation.refresh()
 
@@ -364,6 +354,9 @@ def printToLogDebug(windowLog, text):
 ##################
 
 def main_curses(stdscr):
+	global mainLoop # Global variables
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR # Global variables - Vehicle states
+	
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
 	#curses.use_default_colors() # Use default curses colours
@@ -392,7 +385,7 @@ def main_curses(stdscr):
 		windowButtonInformation = curses.newwin(10, x, y-10, 0)
 		windowButtonInformation.box()
 		windowButtonInformation.refresh()
-		printButtonInformation(windowButtonInformation)
+		printKeysInformation(windowButtonInformation)
 
 		stdscr.refresh()
 
@@ -405,12 +398,165 @@ def main_curses(stdscr):
 			connection = nanpy.SerialManager(device=SERIAL_PORT)
 			aa = nanpy.ArduinoApi(connection=connection)
 			at = nanpy.arduinotree.ArduinoTree(connection=connection)
-		
-		time.sleep(5)
+
+		# Main program loop
+		while mainLoop:
+			time.sleep(0.3)
+			
+			# Vehicle states checking code
+			if stateHullIndicatorLeft:
+				pass
+			if stateHullIndicatorRight:
+				pass
+			if stateGunFiring:
+				#fireGun()
+				pass
+			if stateTurretLights:
+				pass
+			if stateCameraIR:
+				pass
+
+			if stateTracksLeft == -1:
+				printToLogDebug(windowLog, 'Left track backward')
+				trackLeftBackward(255) # Set left track motion
+			if stateTracksLeft == 0:
+				printToLogDebug(windowLog, 'Left track stopped')
+				trackLeftStop() # Stop all left track motion
+			if stateTracksLeft == 1:
+				printToLogDebug(windowLog, 'Left track forward')
+				trackLeftForward(255) # Set left track motion
+
+			if stateTracksRight == -1:
+				printToLogDebug(windowLog, 'Right track backward')
+				trackRightBackward(255) # Set right track motion
+			if stateTracksRight == 0:
+				printToLogDebug(windowLog, 'Right track stopped')
+				trackRightStop() # Stop all right track motion
+			if stateTracksRight == 1:
+				printToLogDebug(windowLog, 'Right track forward')
+				trackRightForward(255) # Set right track motion
+
+			if stateTurretHoriz == -1:
+				printToLogDebug(windowLog, 'Turret horiz left')
+				turretDown(255) # Set turret horizontal motion
+			if stateTurretHoriz == 0:
+				printToLogDebug(windowLog, 'Turret horiz stopped')
+				turretXStop() # Stop all horizontal turret motion
+			if stateTurretHoriz == 1:
+				printToLogDebug(windowLog, 'Turret horiz right')
+				turretUp(255) # Set turret horizontal motion
+
+			if stateTurretVert == -1:
+				printToLogDebug(windowLog, 'Turret vert down')
+				turretLeft(255) # Set turret vertical motion
+			if stateTurretVert == 0:
+				printToLogDebug(windowLog, 'Turret vert stopped')
+				turretYStop() # Stop all vertical turret motion
+			if stateTurretVert == 1:
+				printToLogDebug(windowLog, 'Turret vert up')
+				turretRight(255) # Set turret vertical motion
+
+
+			# Key input code
+			key = stdscr.getch()
+			#curses.flushinp()
+			if key != curses.ERR:
+				#stdscr.refresh()
+				if key == 27: # Esc key - quit
+					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
+					stdscr.nodelay(False) # Set getch() and getkey() to blocking
+					key = stdscr.getch()
+					stdscr.refresh()
+					if key == ord('y'):
+						mainLoop = False # The 'break' in the line below will exit the loop, but setting this variable is a backup
+						stdscr.nodelay(True) # set getch() and getkey() to non-blocking
+						break # Exit the loop
+					stdscr.nodelay(True) # set getch() and getkey() to non-blocking
+				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
+					printToLog(windowLog, 'All movement stopped and modules offline')
+					arduinoUnsetPins()
+					gpioUnsetPins()
+				elif key == 32: # Space bar - fire gun
+					stateGunFiring = True
+				elif key == ord('q'):
+					if stateTracksRight == 1:
+						stateTracksRight = 0
+					else:
+						stateTracksRight = 1
+				elif key == ord('a'):
+					if stateTracksRight == -1:
+						stateTracksRight = 0
+					else:
+						stateTracksRight = -1
+				elif key == ord('e'):
+					if stateTracksLeft == 1 and stateTracksRight == 1:
+						stateTracksLeft = 0
+						stateTracksRight = 0
+					else:
+						stateTracksLeft = 1
+						stateTracksRight = 1
+				elif key == ord('s'):
+					if stateTracksLeft == -1 and stateTracksRight == 1:
+						stateTracksLeft = 0
+						stateTracksRight = 0
+					else:
+						stateTracksLeft = -1
+						stateTracksRight = 1
+				elif key == ord('d'):
+					if stateTracksLeft == -1 and stateTracksRight == -1:
+						stateTracksLeft = 0
+						stateTracksRight = 0
+					else:
+						stateTracksLeft = -1
+						stateTracksRight = -1
+				elif key == ord('f'):
+					if stateTracksLeft == 1 and stateTracksRight == -1:
+						stateTracksLeft = 0
+						stateTracksRight = 0
+					else:
+						stateTracksLeft = 1
+						stateTracksRight = -1
+				elif key == ord('t'):
+					if stateTracksLeft == 1:
+						stateTracksLeft = 0
+					else:
+						stateTracksLeft = 1
+				elif key == ord('g'):
+					if stateTracksLeft == -1:
+						stateTracksLeft = 0
+					else:
+						stateTracksLeft = -1
+				elif key == ord('i'):
+					if stateTurretVert == 1:
+						stateTurretVert = 0
+					else:
+						stateTurretVert = 1
+				elif key == ord('j'):
+					if stateTurretHoriz == -1:
+						stateTurretHoriz = 0
+					else:
+						stateTurretHoriz = -1
+				elif key == ord('k'):
+					if stateTurretVert == -1:
+						stateTurretVert = 0
+					else:
+						stateTurretVert = -1
+				elif key == ord('l'):
+					if stateTurretHoriz == 1:
+						stateTurretHoriz = 0
+					else:
+						stateTurretHoriz = 1
+
+			else:
+				if key == curses.ERR:
+					printToLogDebug(windowLog, 'No key pressed')
+				else:
+					printToLog(windowLog, 'Error: Pressed key not recognised')
+
 	else:
 		endCurses()
 		print('Curses window is too small')
-		print('Minimum size is ' + str(cursesWindowMinimumX) + ' rows by ' + str(cursesWindowMinimumY) + ' lines')
+		print('Minimum size is ' + str(CURSES_WINDOW_MIN_X) + ' rows by ' + str(CURSES_WINDOW_MIN_Y) + ' lines')
 		print('Current size is ' + str(stdscr.getmaxyx()[1]) + ' rows by ' + str(stdscr.getmaxyx()[0]) + ' lines')
 
 	time.sleep(5)
@@ -419,4 +565,9 @@ if __name__ == "__main__":
 	try:
 		curses.wrapper(main_curses)
 	except RuntimeError as e:
+		arduinoUnsetPins()
+		gpioUnsetPins()
 		print(e)
+
+	arduinoUnsetPins()
+	gpioUnsetPins()
