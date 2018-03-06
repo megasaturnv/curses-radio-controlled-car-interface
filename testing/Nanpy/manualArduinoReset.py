@@ -26,15 +26,18 @@ def nanpyReset(pinobj):
 	#reset the pin with nanpy's per-pin built-in reset
 	pinobj.reset()
 
+print('\nInitial pin states')
 for i in range(2, 19+1): # Pin 2 - 13, A0 - A5 (Not A6 & A7)
 	pin = at.pin.get(i)
-	Print('Pin: ' + str(i) + '\t\tOutputState: ' + str(pin.digital_value) + '\t\tInputState: ' + str(pin.read_digital_value()) + '\t\tPinMode: '  + str(pin.read_mode()))
+	print('Pin: ' + str(i) + '\t\tOutputState: ' + str(pin.digital_value) + '\t\tInputState: ' + str(pin.read_digital_value()) + '\t\tPinMode: '  + str(pin.read_mode()))
 
+print('\nResetting pins')
 for i in range(2, 19+1): # Pin 2 - 13, A0 - A5 (Not A6 & A7)
 	pin = at.pin.get(i)
 	#manualReset(pin)
 	nanpyReset(pin)
 
+print('\nPin states after reset')
 for i in range(2, 19+1): # Pin 2 - 13, A0 - A5 (Not A6 & A7)
 	pin = at.pin.get(i)
-	Print('Pin: ' + str(i) + '\t\tOutputState: ' + str(pin.digital_value) + '\t\tInputState: ' + str(pin.read_digital_value()) + '\t\tPinMode: '  + str(pin.read_mode()))
+	print('Pin: ' + str(i) + '\t\tOutputState: ' + str(pin.digital_value) + '\t\tInputState: ' + str(pin.read_digital_value()) + '\t\tPinMode: '  + str(pin.read_mode()))
