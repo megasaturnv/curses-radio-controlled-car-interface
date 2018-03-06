@@ -356,6 +356,8 @@ def printToLogDebug(windowLog, text):
 def main_curses(stdscr):
 	global mainLoop # Global variables
 	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR # Global variables - Vehicle states
+	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
+		global aa, at
 
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
@@ -392,7 +394,6 @@ def main_curses(stdscr):
 		printToLog(windowLog, 'Curses started')
 		printToLogDebug(windowLog, 'Terminal size: ' + str(x) + 'x' + str(y))
 		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
-
 
 		if not FAKE_AN_ARDUINO:
 			connection = nanpy.SerialManager(device=SERIAL_PORT)
