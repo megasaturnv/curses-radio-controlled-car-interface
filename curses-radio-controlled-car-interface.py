@@ -5,16 +5,17 @@
 ##########################
 
 # Debug settings
-DEBUG_VERBOSE_MODE    = True
-FAKE_AN_ARDUINO       = True
-FAKE_RASPBERRYPI_GPIO = True
+KEY_POLL_INTERVAL     = 0.5  # Time delay in seconds between polling the user for key presses which control the vehicle
+DEBUG_VERBOSE_MODE    = True # Display extra information in the log
+FAKE_AN_ARDUINO       = True # Fake an Arduino on the serial port. This setting disables Nanpy
+FAKE_RASPBERRYPI_GPIO = True # Fake Raspberry Pi GPIO pins. This setting disables RPi.GPIO
 
 # Window size settings
-CURSES_WINDOW_MIN_X = 126
-CURSES_WINDOW_MIN_Y = 29
+CURSES_WINDOW_MIN_X = 126 # Minimum columns required to run interface
+CURSES_WINDOW_MIN_Y = 29  # Minimum rows required to run interface
 
 # Nanpy settings
-SERIAL_PORT = '/dev/serial0'
+SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
 
 # Raspberry Pi GPIO pins
 RPI_I2C_SDA               = 2
@@ -402,7 +403,7 @@ def main_curses(stdscr):
 
 		# Main program loop
 		while mainLoop:
-			time.sleep(1)
+			time.sleep(KEY_POLL_INTERVAL)
 
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
