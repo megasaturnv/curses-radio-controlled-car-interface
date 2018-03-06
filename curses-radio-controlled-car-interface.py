@@ -87,8 +87,8 @@ stateGunFiring          = False
 stateTurretLights       = False
 stateCameraIR           = False
 
-stateLeftTracksSpeed = TRACK_LEFT_SPEED_3_PWM
-stateRightTracksSpeed = TRACK_RIGHT_SPEED_3_PWM
+stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_3_PWM
+stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_3_PWM
 stateTracksAcceleration = 2
 
 
@@ -376,7 +376,7 @@ def printToLogDebug(windowLog, text):
 
 def main_curses(stdscr):
 	global mainLoop # Global variables
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksSpeed, stateRightTracksSpeed, stateTracksAcceleration # Global variables - Vehicle states
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
 
@@ -427,38 +427,38 @@ def main_curses(stdscr):
 
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
-				pass
+				stateHullIndicatorLeft = False
 			if stateHullIndicatorRight:
-				pass
+				stateHullIndicatorRight = False
 			if stateGunFiring:
 				#fireGun()
-				pass
+				stateGunFiring = False
 			if stateTurretLights:
-				pass
+				stateTurretLights = False
 			if stateCameraIR:
-				pass
+				stateCameraIR = False
 
 			if stateTracksLeft == -1:
-				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksSpeed))
-				trackLeftBackward(stateLeftTracksSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksTargetSpeed))
+				trackLeftBackward(stateLeftTracksTargetSpeed) # Set left track motion
 			elif stateTracksLeft == 0:
 				printToLogDebug(windowLog, 'Left track stopped')
 				trackLeftStop() # Stop all left track motion
 				stateTracksLeft = 1000
 			elif stateTracksLeft == 1:
-				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksSpeed))
-				trackLeftForward(stateLeftTracksSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksTargetSpeed))
+				trackLeftForward(stateLeftTracksTargetSpeed) # Set left track motion
 
 			if stateTracksRight == -1:
-				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksSpeed))
-				trackRightBackward(stateRightTracksSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
+				trackRightBackward(stateRightTracksTargetSpeed) # Set right track motion
 			elif stateTracksRight == 0:
 				printToLogDebug(windowLog, 'Right track stopped')
 				trackRightStop() # Stop all right track motion
 				stateTracksRight = 1000
 			elif stateTracksRight == 1:
-				printToLogDebug(windowLog, 'Right track forward at speed: ' + str(stateRightTracksSpeed))
-				trackRightForward(stateRightTracksSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track forward at speed: ' + str(stateRightTracksTargetSpeed))
+				trackRightForward(stateRightTracksTargetSpeed) # Set right track motion
 
 			if stateTurretHoriz == -1:
 				printToLogDebug(windowLog, 'Turret horiz left')
@@ -587,16 +587,16 @@ def main_curses(stdscr):
 					else:
 						stateTurretHoriz = 1
 				elif key == ord('1'): # 1 - Set tracks to slowest top speed
-					stateLeftTracksSpeed = TRACK_LEFT_SPEED_1_PWM
-					stateRightTracksSpeed = TRACK_RIGHT_SPEED_1_PWM
+					stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_1_PWM
+					stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_1_PWM
 					printToLog(windowLog, 'Speed changed to 1')
 				elif key == ord('2'): # 2 - Set tracks to medium top speed
-					stateLeftTracksSpeed = TRACK_LEFT_SPEED_2_PWM
-					stateRightTracksSpeed = TRACK_RIGHT_SPEED_2_PWM
+					stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_2_PWM
+					stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_2_PWM
 					printToLog(windowLog, 'Speed changed to 2')
 				elif key == ord('3'): # 3 - Set tracks to fastest top speed
-					stateLeftTracksSpeed = TRACK_LEFT_SPEED_3_PWM
-					stateRightTracksSpeed = TRACK_RIGHT_SPEED_3_PWM
+					stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_3_PWM
+					stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_3_PWM
 					printToLog(windowLog, 'Speed changed to 3')
 				elif key == ord('4'): # 4 - Set tracks to slowest acceleration
 					stateTracksAcceleration = 1
