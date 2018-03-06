@@ -44,12 +44,27 @@ TRACK_LEFT_PWM_PIN       = 6
 TRACK_LEFT_FORWARD_PIN   = 16 #(A2)
 TRACK_LEFT_BACKWARD_PIN  = 15 #(A1)
 
+TRACK_RIGHT_SPEED_1_PWM  = 100
+TRACK_RIGHT_SPEED_2_PWM  = 180
+TRACK_RIGHT_SPEED_3_PWM  = 255
+TRACK_LEFT_SPEED_1_PWM  = 100
+TRACK_LEFT_SPEED_2_PWM  = 180
+TRACK_LEFT_SPEED_3_PWM  = 255
+
+TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 50 # Acceleration in (PWM units / second) for left track
+TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 50 # Acceleration in (PWM units / second) for right track
+
 TURRET_X_PWM_PIN = 5
 TURRET_LEFT_PIN  = 7
 TURRET_RIGHT_PIN = 4
 TURRET_Y_PWM_PIN = 9
 TURRET_UP_PIN    = 12
 TURRET_DOWN_PIN  = 8
+
+TURRET_LEFT_SPEED_PWM  = 255
+TURRET_RIGHT_SPEED_PWM = 255
+TURRET_UP_SPEED_PWM    = 255
+TURRET_DOWN_SPEED_PWM  = 255
 
 
 ######################
@@ -61,16 +76,21 @@ logTotal = 1
 mainLoop = True
 
 # Vehicle states
-stateTracksLeft  = 0 # 0 = stopped. -1 = backwards.      1 = forwards
-stateTracksRight = 0 # 0 = stopped. -1 = backwards.      1 = forwards
-stateTurretHoriz = 0 # 0 = stopped. -1 = anti-clockwise. 1 = clockwise
-stateTurretVert  = 0 # 0 = stopped. -1 = down.           1 = up
+stateTracksLeft  = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+stateTracksRight = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+stateTurretHoriz = 0 # 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
+stateTurretVert  = 0 # 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
 
 stateHullIndicatorLeft  = False
 stateHullIndicatorRight = False
 stateGunFiring          = False
 stateTurretLights       = False
 stateCameraIR           = False
+
+stateLeftTracksSpeed = TRACK_LEFT_SPEED_3_PWM
+stateRightTracksSpeed = TRACK_RIGHT_SPEED_3_PWM
+stateTracksAcceleration = 2
+
 
 #############
 ## IMPORTS ##
@@ -356,7 +376,7 @@ def printToLogDebug(windowLog, text):
 
 def main_curses(stdscr):
 	global mainLoop # Global variables
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR # Global variables - Vehicle states
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksSpeed, stateRightTracksSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
 
@@ -419,48 +439,48 @@ def main_curses(stdscr):
 				pass
 
 			if stateTracksLeft == -1:
-				printToLogDebug(windowLog, 'Left track backward')
-				trackLeftBackward(255) # Set left track motion
-			if stateTracksLeft == 0:
+				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksSpeed))
+				trackLeftBackward(stateLeftTracksSpeed) # Set left track motion
+			elif stateTracksLeft == 0:
 				printToLogDebug(windowLog, 'Left track stopped')
 				trackLeftStop() # Stop all left track motion
 				stateTracksLeft = 1000
-			if stateTracksLeft == 1:
-				printToLogDebug(windowLog, 'Left track forward')
-				trackLeftForward(255) # Set left track motion
+			elif stateTracksLeft == 1:
+				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksSpeed))
+				trackLeftForward(stateLeftTracksSpeed) # Set left track motion
 
 			if stateTracksRight == -1:
-				printToLogDebug(windowLog, 'Right track backward')
-				trackRightBackward(255) # Set right track motion
-			if stateTracksRight == 0:
+				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksSpeed))
+				trackRightBackward(stateRightTracksSpeed) # Set right track motion
+			elif stateTracksRight == 0:
 				printToLogDebug(windowLog, 'Right track stopped')
 				trackRightStop() # Stop all right track motion
 				stateTracksRight = 1000
-			if stateTracksRight == 1:
-				printToLogDebug(windowLog, 'Right track forward')
-				trackRightForward(255) # Set right track motion
+			elif stateTracksRight == 1:
+				printToLogDebug(windowLog, 'Right track forward at speed: ' + str(stateRightTracksSpeed))
+				trackRightForward(stateRightTracksSpeed) # Set right track motion
 
 			if stateTurretHoriz == -1:
 				printToLogDebug(windowLog, 'Turret horiz left')
-				turretLeft(255) # Set turret horizontal motion
-			if stateTurretHoriz == 0:
+				turretLeft(TURRET_LEFT_SPEED_PWM) # Set turret horizontal motion
+			elif stateTurretHoriz == 0:
 				printToLogDebug(windowLog, 'Turret horiz stopped')
 				turretXStop() # Stop all horizontal turret motion
 				stateTurretHoriz = 1000
-			if stateTurretHoriz == 1:
+			elif stateTurretHoriz == 1:
 				printToLogDebug(windowLog, 'Turret horiz right')
-				turretRight(255) # Set turret horizontal motion
+				turretRight(TURRET_RIGHT_SPEED_PWM) # Set turret horizontal motion
 
 			if stateTurretVert == -1:
 				printToLogDebug(windowLog, 'Turret vert down')
-				turretDown(255) # Set turret vertical motion
-			if stateTurretVert == 0:
+				turretDown(TURRET_DOWN_SPEED_PWM) # Set turret vertical motion
+			elif stateTurretVert == 0:
 				printToLogDebug(windowLog, 'Turret vert stopped')
 				turretYStop() # Stop all vertical turret motion
 				stateTurretVert = 1000
-			if stateTurretVert == 1:
+			elif stateTurretVert == 1:
 				printToLogDebug(windowLog, 'Turret vert up')
-				turretUp(255) # Set turret vertical motion
+				turretUp(TURRET_UP_SPEED_PWM) # Set turret vertical motion
 
 
 			# Key input code
@@ -483,9 +503,11 @@ def main_curses(stdscr):
 					stdscr.nodelay(True) # set getch() and getkey() to non-blocking
 				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
 					printToLog(windowLog, 'All movement stopped and modules offline')
-					arduinoUnsetPins()
+
+					arduinoUnsetPins() # Set all pins to their safe defaults
 					gpioUnsetPins()
-					stateTracksLeft = 0
+
+					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateTracksRight = 0
 					stateTurretHoriz = 0
 					stateTurretVert = 0
@@ -496,74 +518,92 @@ def main_curses(stdscr):
 					stateCameraIR = False
 				elif key == 32: # Space bar - fire gun
 					stateGunFiring = True
-				elif key == ord('q'):
+				elif key == ord('q'): # Q - Turn left. Right track forward
 					if stateTracksRight == 1:
 						stateTracksRight = 0
 					else:
 						stateTracksRight = 1
-				elif key == ord('a'):
-					if stateTracksRight == -1:
-						stateTracksRight = 0
+				elif key == ord('a'): # A - Turn left. Left track backward
+					if stateTracksLeft == -1:
+						stateTracksLeft = 0
 					else:
-						stateTracksRight = -1
-				elif key == ord('e'):
+						stateTracksLeft = -1
+				elif key == ord('e'): # E - Both tracks forward
 					if stateTracksLeft == 1 and stateTracksRight == 1:
 						stateTracksLeft = 0
 						stateTracksRight = 0
 					else:
 						stateTracksLeft = 1
 						stateTracksRight = 1
-				elif key == ord('s'):
+				elif key == ord('s'): # S - Hard turn left. Left track backwards. Right track forwards
 					if stateTracksLeft == -1 and stateTracksRight == 1:
 						stateTracksLeft = 0
 						stateTracksRight = 0
 					else:
 						stateTracksLeft = -1
 						stateTracksRight = 1
-				elif key == ord('d'):
+				elif key == ord('d'): # D - Both tracks backward
 					if stateTracksLeft == -1 and stateTracksRight == -1:
 						stateTracksLeft = 0
 						stateTracksRight = 0
 					else:
 						stateTracksLeft = -1
 						stateTracksRight = -1
-				elif key == ord('f'):
+				elif key == ord('f'): # F - Hard Turn right. Right track forwards. Left track backwards
 					if stateTracksLeft == 1 and stateTracksRight == -1:
 						stateTracksLeft = 0
 						stateTracksRight = 0
 					else:
 						stateTracksLeft = 1
 						stateTracksRight = -1
-				elif key == ord('t'):
-					if stateTracksLeft == 1:
-						stateTracksLeft = 0
+				elif key == ord('t'): # T - Turn right. Right track forward
+					if stateTracksRight == 1:
+						stateTracksRight = 0
 					else:
-						stateTracksLeft = 1
-				elif key == ord('g'):
+						stateTracksRight = 1
+				elif key == ord('g'): # G - Turn right. Left track backward
 					if stateTracksLeft == -1:
 						stateTracksLeft = 0
 					else:
 						stateTracksLeft = -1
-				elif key == ord('i'):
+				elif key == ord('i'): # I - Turret up
 					if stateTurretVert == 1:
 						stateTurretVert = 0
 					else:
 						stateTurretVert = 1
-				elif key == ord('j'):
+				elif key == ord('j'): # J - Turret left
 					if stateTurretHoriz == -1:
 						stateTurretHoriz = 0
 					else:
 						stateTurretHoriz = -1
-				elif key == ord('k'):
+				elif key == ord('k'): # K - Turret down
 					if stateTurretVert == -1:
 						stateTurretVert = 0
 					else:
 						stateTurretVert = -1
-				elif key == ord('l'):
+				elif key == ord('l'): # L - Turret right
 					if stateTurretHoriz == 1:
 						stateTurretHoriz = 0
 					else:
 						stateTurretHoriz = 1
+				elif key == ord('1'): # 1 - Set tracks to slowest top speed
+					stateLeftTracksSpeed = TRACK_LEFT_SPEED_1_PWM
+					stateRightTracksSpeed = TRACK_RIGHT_SPEED_1_PWM
+					printToLog(windowLog, 'Speed changed to 1')
+				elif key == ord('2'): # 2 - Set tracks to medium top speed
+					stateLeftTracksSpeed = TRACK_LEFT_SPEED_2_PWM
+					stateRightTracksSpeed = TRACK_RIGHT_SPEED_2_PWM
+					printToLog(windowLog, 'Speed changed to 2')
+				elif key == ord('3'): # 3 - Set tracks to fastest top speed
+					stateLeftTracksSpeed = TRACK_LEFT_SPEED_3_PWM
+					stateRightTracksSpeed = TRACK_RIGHT_SPEED_3_PWM
+					printToLog(windowLog, 'Speed changed to 3')
+				elif key == ord('4'): # 4 - Set tracks to slowest acceleration
+					stateTracksAcceleration = 1
+					printToLog(windowLog, 'Acceleration changed to 1')
+				elif key == ord('5'): # 5 - Set tracks to fastest acceleration
+					stateTracksAcceleration = 2
+					printToLog(windowLog, 'Acceleration changed to 2')
 				else:
 					printToLog(windowLog, 'Warning: Pressed key not recognised: ' + chr(key) + ' = ' + str(key))
 
