@@ -245,7 +245,7 @@ def printKeysInformation(windowButtonInformation):
 	printButton(windowButtonInformation, 6, 26, 'J', False)
 	printButton(windowButtonInformation, 6, 30, 'K', False)
 	printButton(windowButtonInformation, 6, 34, 'L', False)
-	
+
 	printButton(windowButtonInformation, 2, 46, '1', False)
 	printButton(windowButtonInformation, 2, 50, '2', False)
 	printButton(windowButtonInformation, 2, 54, '3', False)
@@ -257,7 +257,7 @@ def printKeysInformation(windowButtonInformation):
 	printButton(windowButtonInformation, 6, 54, '8', False)
 	printButton(windowButtonInformation, 6, 58, '9', False)
 	printButton(windowButtonInformation, 6, 62, '0', False)
-	
+
 	printButton(windowButtonInformation, 2, 74, 'Escape',    False)
 	printButton(windowButtonInformation, 6, 74, 'Enter',     False)
 	printButton(windowButtonInformation, 2, 83, 'Backspace', False)
@@ -356,7 +356,7 @@ def printToLogDebug(windowLog, text):
 def main_curses(stdscr):
 	global mainLoop # Global variables
 	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR # Global variables - Vehicle states
-	
+
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
 	#curses.use_default_colors() # Use default curses colours
@@ -392,7 +392,7 @@ def main_curses(stdscr):
 		printToLog(windowLog, 'Curses started')
 		printToLogDebug(windowLog, 'Terminal size: ' + str(x) + 'x' + str(y))
 		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
-		
+
 
 		if not FAKE_AN_ARDUINO:
 			connection = nanpy.SerialManager(device=SERIAL_PORT)
@@ -402,7 +402,7 @@ def main_curses(stdscr):
 		# Main program loop
 		while mainLoop:
 			time.sleep(1)
-			
+
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
 				pass
@@ -574,10 +574,20 @@ def main_curses(stdscr):
 if __name__ == "__main__":
 	try:
 		curses.wrapper(main_curses)
-	except RuntimeError as e:
+	except Exception as e:
+	#except RuntimeError as e:
 		arduinoUnsetPins()
 		gpioUnsetPins()
+		print('Exception')
 		print(e)
+	except KeyboardInterrupt as e:
+        arduinoUnsetPins()
+        gpioUnsetPins()
+        print('KeyboardInterrupt')
+        print(e)
+	except:
+        arduinoUnsetPins()
+        gpioUnsetPins()
 
 	arduinoUnsetPins()
 	gpioUnsetPins()
