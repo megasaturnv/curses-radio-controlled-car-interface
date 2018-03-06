@@ -51,8 +51,8 @@ TRACK_LEFT_SPEED_1_PWM  = 100
 TRACK_LEFT_SPEED_2_PWM  = 180
 TRACK_LEFT_SPEED_3_PWM  = 255
 
-TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 50 # Acceleration in (PWM units / second) for left track
-TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 50 # Acceleration in (PWM units / second) for right track
+TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 30 # Acceleration in (PWM units / second) for left track
+TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 30 # Acceleration in (PWM units / second) for right track
 
 TURRET_X_PWM_PIN = 5
 TURRET_LEFT_PIN  = 7
@@ -118,6 +118,9 @@ def trackLeftBackward(speed):
 	if not FAKE_AN_ARDUINO:
 		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
 		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+def trackLeftSpeed(speed):
+	if not FAKE_AN_ARDUINO:
 		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
 def trackLeftStop():
 	if not FAKE_AN_ARDUINO:
@@ -375,10 +378,15 @@ def printToLogDebug(windowLog, text):
 ##################
 
 def main_curses(stdscr):
-	global mainLoop # Global variables
+	# Global variables
+	global mainLoop
 	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
+
+	# Local variables
+	stateLeftTracksCurrentSpeed = 0
+	trackLeftAccelerationLastSet = time.time()
 
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
@@ -425,29 +433,54 @@ def main_curses(stdscr):
 		while mainLoop:
 			time.sleep(KEY_POLL_INTERVAL)
 
+			# Speed acceleration calculation code
+			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
+				elapsedTime = time.time() - trackLeftAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's speed was updated
+				if stateTracksLeft == 1 or stateTracksLeft == -1: # If vehicle is moving forward or backward
+					stateLeftTracksCurrentSpeed += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentSpeed
+					if stateLeftTracksCurrentSpeed > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						stateLeftTracksCurrentSpeed = stateLeftTracksTargetSpeed # Set current speed to target speed
+				elif stateTracksLeft == 0: # If vehicle is stopping / stopped
+					stateLeftTracksCurrentSpeed -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentSpeed
+					if stateLeftTracksCurrentSpeed < 0: # If current speed is less than 0
+						stateLeftTracksCurrentSpeed = 0 # Set current speed to 0
+			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
+				if stateTracksLeft == 1 or stateTracksLeft == -1: # If vehicle is moving forward or backward
+					stateLeftTracksCurrentSpeed = stateLeftTracksTargetSpeed # Go to target speed instantly
+				elif stateTracksLeft == 0: # If vehicle is stopping / stopped
+					stateLeftTracksCurrentSpeed = 0 # Go to 0 speed instantly
+			trackLeftAccelerationLastSet = time.time() # Set trackLeftAccelerationLastSet to current Unix time
+
+
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
 				stateHullIndicatorLeft = False
 			if stateHullIndicatorRight:
 				stateHullIndicatorRight = False
-			if stateGunFiring:
-				#fireGun()
-				stateGunFiring = False
 			if stateTurretLights:
 				stateTurretLights = False
 			if stateCameraIR:
 				stateCameraIR = False
+			if stateGunFiring:
+				#fireGun()
+				stateGunFiring = False
 
 			if stateTracksLeft == -1:
-				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksTargetSpeed))
-				trackLeftBackward(stateLeftTracksTargetSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksCurrentSpeed))
+				trackLeftBackward(stateLeftTracksCurrentSpeed) # Set left track motion
 			elif stateTracksLeft == 0:
-				printToLogDebug(windowLog, 'Left track stopped')
-				trackLeftStop() # Stop all left track motion
-				stateTracksLeft = 1000
+				
+				if stateLeftTracksCurrentSpeed == 0:
+					trackLeftStop() # Stop all left track motion
+					printToLogDebug(windowLog, 'Left track stopped')
+					stateTracksLeft = 1000
+				else:
+					trackLeftSpeed(stateLeftTracksCurrentSpeed) # Set left track pwm speed to stateLeftTracksCurrentSpeed
+					printToLogDebug(windowLog, 'Left track stopping. Speed: ' + str(stateLeftTracksCurrentSpeed))
+				
 			elif stateTracksLeft == 1:
-				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksTargetSpeed))
-				trackLeftForward(stateLeftTracksTargetSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksCurrentSpeed))
+				trackLeftForward(stateLeftTracksCurrentSpeed) # Set left track motion
 
 			if stateTracksRight == -1:
 				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
