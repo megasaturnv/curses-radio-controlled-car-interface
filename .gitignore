@@ -1,5 +1,5 @@
 # Excluded folders
-testing_wip/
+wip_testing/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
