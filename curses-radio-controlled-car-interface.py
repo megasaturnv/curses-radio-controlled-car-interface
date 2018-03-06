@@ -424,6 +424,7 @@ def main_curses(stdscr):
 			if stateTracksLeft == 0:
 				printToLogDebug(windowLog, 'Left track stopped')
 				trackLeftStop() # Stop all left track motion
+				stateTracksLeft = 1000
 			if stateTracksLeft == 1:
 				printToLogDebug(windowLog, 'Left track forward')
 				trackLeftForward(255) # Set left track motion
@@ -434,6 +435,7 @@ def main_curses(stdscr):
 			if stateTracksRight == 0:
 				printToLogDebug(windowLog, 'Right track stopped')
 				trackRightStop() # Stop all right track motion
+				stateTracksRight = 1000
 			if stateTracksRight == 1:
 				printToLogDebug(windowLog, 'Right track forward')
 				trackRightForward(255) # Set right track motion
@@ -444,6 +446,7 @@ def main_curses(stdscr):
 			if stateTurretHoriz == 0:
 				printToLogDebug(windowLog, 'Turret horiz stopped')
 				turretXStop() # Stop all horizontal turret motion
+				stateTurretHoriz = 1000
 			if stateTurretHoriz == 1:
 				printToLogDebug(windowLog, 'Turret horiz right')
 				turretRight(255) # Set turret horizontal motion
@@ -454,6 +457,7 @@ def main_curses(stdscr):
 			if stateTurretVert == 0:
 				printToLogDebug(windowLog, 'Turret vert stopped')
 				turretYStop() # Stop all vertical turret motion
+				stateTurretVert = 1000
 			if stateTurretVert == 1:
 				printToLogDebug(windowLog, 'Turret vert up')
 				turretUp(255) # Set turret vertical motion
