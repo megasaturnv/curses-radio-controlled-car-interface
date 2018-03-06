@@ -439,23 +439,23 @@ def main_curses(stdscr):
 
 			if stateTurretHoriz == -1:
 				printToLogDebug(windowLog, 'Turret horiz left')
-				turretDown(255) # Set turret horizontal motion
+				turretLeft(255) # Set turret horizontal motion
 			if stateTurretHoriz == 0:
 				printToLogDebug(windowLog, 'Turret horiz stopped')
 				turretXStop() # Stop all horizontal turret motion
 			if stateTurretHoriz == 1:
 				printToLogDebug(windowLog, 'Turret horiz right')
-				turretUp(255) # Set turret horizontal motion
+				turretRight(255) # Set turret horizontal motion
 
 			if stateTurretVert == -1:
 				printToLogDebug(windowLog, 'Turret vert down')
-				turretLeft(255) # Set turret vertical motion
+				turretDown(255) # Set turret vertical motion
 			if stateTurretVert == 0:
 				printToLogDebug(windowLog, 'Turret vert stopped')
 				turretYStop() # Stop all vertical turret motion
 			if stateTurretVert == 1:
 				printToLogDebug(windowLog, 'Turret vert up')
-				turretRight(255) # Set turret vertical motion
+				turretUp(255) # Set turret vertical motion
 
 
 			# Key input code
