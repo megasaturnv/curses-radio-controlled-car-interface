@@ -581,13 +581,13 @@ if __name__ == "__main__":
 		print('Exception')
 		print(e)
 	except KeyboardInterrupt as e:
-        arduinoUnsetPins()
-        gpioUnsetPins()
-        print('KeyboardInterrupt')
-        print(e)
+		arduinoUnsetPins()
+		gpioUnsetPins()
+		print('KeyboardInterrupt')
+		print(e)
 	except:
-        arduinoUnsetPins()
-        gpioUnsetPins()
+		arduinoUnsetPins()
+		gpioUnsetPins()
 
 	arduinoUnsetPins()
 	gpioUnsetPins()
