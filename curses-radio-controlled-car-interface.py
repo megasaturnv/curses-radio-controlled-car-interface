@@ -435,7 +435,7 @@ def main_curses(stdscr):
 
 			# Velocity and acceleration calculation code
 			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
-				elapsedTime = time.time() - trackLeftAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's speed was updated
+				elapsedTime = time.time() - trackLeftAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
 				if stateTracksLeft == 1: # If vehicle is moving forward
 					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
 					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
