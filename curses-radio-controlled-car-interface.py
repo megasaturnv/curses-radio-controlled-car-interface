@@ -385,7 +385,7 @@ def main_curses(stdscr):
 		global aa, at
 
 	# Local variables
-	stateLeftTracksCurrentSpeed = 0
+	stateLeftTracksCurrentVelocity = 0
 	trackLeftAccelerationLastSet = time.time()
 
 	#stdscr = curses.initscr() # setup intial window
@@ -433,22 +433,35 @@ def main_curses(stdscr):
 		while mainLoop:
 			time.sleep(KEY_POLL_INTERVAL)
 
-			# Speed acceleration calculation code
+			# Velocity and acceleration calculation code
 			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
 				elapsedTime = time.time() - trackLeftAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's speed was updated
-				if stateTracksLeft == 1 or stateTracksLeft == -1: # If vehicle is moving forward or backward
-					stateLeftTracksCurrentSpeed += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentSpeed
-					if stateLeftTracksCurrentSpeed > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
-						stateLeftTracksCurrentSpeed = stateLeftTracksTargetSpeed # Set current speed to target speed
+				if stateTracksLeft == 1: # If vehicle is moving forward
+					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
+					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
+				elif stateTracksLeft == -1: # If vehicle is moving backward
+					stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
+					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
 				elif stateTracksLeft == 0: # If vehicle is stopping / stopped
-					stateLeftTracksCurrentSpeed -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentSpeed
-					if stateLeftTracksCurrentSpeed < 0: # If current speed is less than 0
-						stateLeftTracksCurrentSpeed = 0 # Set current speed to 0
+					if stateLeftTracksCurrentVelocity > 0: # If stateLeftTracksCurrentVelocity is positive
+						stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
+						if stateLeftTracksCurrentVelocity < 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
+							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
+					elif stateLeftTracksCurrentVelocity < 0: # If stateLeftTracksCurrentVelocity is negative
+						stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
+						if stateLeftTracksCurrentVelocity > 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
+							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
+
 			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
-				if stateTracksLeft == 1 or stateTracksLeft == -1: # If vehicle is moving forward or backward
-					stateLeftTracksCurrentSpeed = stateLeftTracksTargetSpeed # Go to target speed instantly
-				elif stateTracksLeft == 0: # If vehicle is stopping / stopped
-					stateLeftTracksCurrentSpeed = 0 # Go to 0 speed instantly
+				if stateTracksLeft == 1: # If vehicle is moving forward...
+					stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
+				if stateTracksLeft == -1: # If vehicle is moving backward...
+					stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
+				elif stateTracksLeft == 0: # If vehicle is stopping / stopped...
+					stateLeftTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+
 			trackLeftAccelerationLastSet = time.time() # Set trackLeftAccelerationLastSet to current Unix time
 
 
@@ -466,21 +479,19 @@ def main_curses(stdscr):
 				stateGunFiring = False
 
 			if stateTracksLeft == -1:
-				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksCurrentSpeed))
-				trackLeftBackward(stateLeftTracksCurrentSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
+				trackLeftBackward(abs(stateLeftTracksCurrentVelocity)) # Set left track motion
 			elif stateTracksLeft == 0:
-				
-				if stateLeftTracksCurrentSpeed == 0:
+				if stateLeftTracksCurrentVelocity == 0:
 					trackLeftStop() # Stop all left track motion
 					printToLogDebug(windowLog, 'Left track stopped')
 					stateTracksLeft = 1000
 				else:
-					trackLeftSpeed(stateLeftTracksCurrentSpeed) # Set left track pwm speed to stateLeftTracksCurrentSpeed
-					printToLogDebug(windowLog, 'Left track stopping. Speed: ' + str(stateLeftTracksCurrentSpeed))
-				
+					trackLeftSpeed(abs(stateLeftTracksCurrentVelocity)) # Set left track pwm speed to stateLeftTracksCurrentVelocity
+					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(stateLeftTracksCurrentVelocity))
 			elif stateTracksLeft == 1:
-				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksCurrentSpeed))
-				trackLeftForward(stateLeftTracksCurrentSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
+				trackLeftForward(abs(stateLeftTracksCurrentVelocity)) # Set left track motion
 
 			if stateTracksRight == -1:
 				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
@@ -524,6 +535,18 @@ def main_curses(stdscr):
 				if key == 27: # Esc key - quit
 					arduinoUnsetPins()
 					gpioUnsetPins()
+					
+					stateTracksLeft = 0 # Set state variables to their non-functional values
+					stateLeftTracksCurrentVelocity = 0
+					stateTracksRight = 0
+					stateTurretHoriz = 0
+					stateTurretVert = 0
+					stateHullIndicatorLeft = False
+					stateHullIndicatorRight = False
+					stateGunFiring = False
+					stateTurretLights = False
+					stateCameraIR = False
+					
 					printToLog(windowLog, 'All movement stopped and modules offline')
 					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
 					stdscr.nodelay(False) # Set getch() and getkey() to blocking
@@ -533,7 +556,8 @@ def main_curses(stdscr):
 						mainLoop = False # The 'break' in the line below will exit the loop, but setting this variable is a backup
 						stdscr.nodelay(True) # set getch() and getkey() to non-blocking
 						break # Exit the loop
-					stdscr.nodelay(True) # set getch() and getkey() to non-blocking
+					stdscr.nodelay(True) # set getch() and getkey() back to non-blocking
+					trackLeftAccelerationLastSet = time.time() # Set trackLeftAccelerationLastSet to current Unix time
 				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
 					printToLog(windowLog, 'All movement stopped and modules offline')
 
@@ -541,6 +565,7 @@ def main_curses(stdscr):
 					gpioUnsetPins()
 
 					stateTracksLeft = 0 # Set state variables to their non-functional values
+					stateLeftTracksCurrentVelocity = 0
 					stateTracksRight = 0
 					stateTurretHoriz = 0
 					stateTurretVert = 0
@@ -549,6 +574,7 @@ def main_curses(stdscr):
 					stateGunFiring = False
 					stateTurretLights = False
 					stateCameraIR = False
+
 				elif key == 32: # Space bar - fire gun
 					stateGunFiring = True
 				elif key == ord('q'): # Q - Turn left. Right track forward
