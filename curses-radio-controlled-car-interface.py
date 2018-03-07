@@ -109,25 +109,22 @@ import curses, time
 ## ARDUINO NANPY FUNCTIONS ##
 #############################
 
-def trackLeftForward(speed):
-	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
-def trackLeftBackward(speed):
-	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
 def trackLeftSpeed(speed):
 	if not FAKE_AN_ARDUINO:
 		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
-def trackLeftStop():
+def trackLeft(velocity):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, 0)
-
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, velocity)  # Set track's velocity on PWM pin
+		if velocity == 0: # Set tracks to not move
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		elif velocity > 0: # Set tracks to move forwards
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		elif velocity < 0: # Set tracks to move backwards
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
+		
 def trackRightForward(speed):
 	if not FAKE_AN_ARDUINO:
 		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
@@ -480,10 +477,10 @@ def main_curses(stdscr):
 
 			if stateTracksLeft == -1:
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
-				trackLeftBackward(abs(stateLeftTracksCurrentVelocity)) # Set left track motion
+				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 			elif stateTracksLeft == 0:
 				if stateLeftTracksCurrentVelocity == 0:
-					trackLeftStop() # Stop all left track motion
+					trackLeft(0) # Stop all left track motion
 					printToLogDebug(windowLog, 'Left track stopped')
 					stateTracksLeft = 1000
 				else:
@@ -491,7 +488,7 @@ def main_curses(stdscr):
 					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(stateLeftTracksCurrentVelocity))
 			elif stateTracksLeft == 1:
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
-				trackLeftForward(abs(stateLeftTracksCurrentVelocity)) # Set left track motion
+				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 
 			if stateTracksRight == -1:
 				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
