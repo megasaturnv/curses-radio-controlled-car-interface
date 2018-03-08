@@ -676,16 +676,16 @@ def main_curses(stdscr):
 					else:
 						stateTracksLeft = 1
 						stateTracksRight = -1
-				elif key == ord('t'): # T - Turn right. Right track forward
-					if stateTracksRight == 1:
-						stateTracksRight = 0
-					else:
-						stateTracksRight = 1
-				elif key == ord('g'): # G - Turn right. Left track backward
-					if stateTracksLeft == -1:
+				elif key == ord('t'): # T - Turn right. Left track forward
+					if stateTracksLeft == 1:
 						stateTracksLeft = 0
 					else:
-						stateTracksLeft = -1
+						stateTracksLeft = 1
+				elif key == ord('g'): # G - Turn right. Right track backward
+					if stateTracksRight == -1:
+						stateTracksRight = 0
+					else:
+						stateTracksRight = -1
 				elif key == ord('i'): # I - Turret up
 					if stateTurretVert == 1:
 						stateTurretVert = 0
