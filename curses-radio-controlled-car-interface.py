@@ -231,15 +231,11 @@ def rpiResetArduino(): # Reset Arduino by pulsing RPI_UART_DTR pin
 ## CURSES FUNCTIONS ##
 ######################
 
-def endCurses():
-	global curses
-	global stdscr
-
+def endCurses(stdscr):
 	curses.nocbreak()
 	stdscr.keypad(False)
 	curses.echo()
 	curses.endwin()
-
 	print('Curses ended')
 
 def checkCursesWindowSize(window):
@@ -410,6 +406,7 @@ def main_curses(stdscr):
 	stateRightTracksCurrentVelocity = 0
 	trackAccelerationLastSet = time.time()
 
+	# Curses settings
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
 	#curses.use_default_colors() # Use default curses colours
@@ -419,8 +416,14 @@ def main_curses(stdscr):
 	curses.curs_set(False) # Suppress the blinking cursor
 	stdscr.nodelay(True)   # Set getch() and getkey() to non-blocking
 
+	# Setup Arduino connection
+	if not FAKE_AN_ARDUINO:
+		connection = nanpy.SerialManager(device=SERIAL_PORT)
+		aa = nanpy.ArduinoApi(connection=connection)
+		at = nanpy.arduinotree.ArduinoTree(connection=connection)
+
+	y, x = stdscr.getmaxyx()
 	if checkCursesWindowSize(stdscr):
-		y, x = stdscr.getmaxyx()
 		stdscr.refresh()
 
 		# Windows setup
@@ -445,11 +448,6 @@ def main_curses(stdscr):
 		printToLog(windowLog, 'Curses started')
 		printToLogDebug(windowLog, 'Terminal size: ' + str(x) + 'x' + str(y))
 		printTankBatteryLevels(windowTankModules, 8.4, 3.2, 7.4) # Testing
-
-		if not FAKE_AN_ARDUINO:
-			connection = nanpy.SerialManager(device=SERIAL_PORT)
-			aa = nanpy.ArduinoApi(connection=connection)
-			at = nanpy.arduinotree.ArduinoTree(connection=connection)
 
 		arduinoSetupPinsState() # Set all pins to their defaults
 		arduinoSetupPinsMode()
@@ -736,10 +734,10 @@ def main_curses(stdscr):
 
 			key = -1
 	else:
-		endCurses()
+		endCurses(stdscr)
 		print('Curses window is too small')
 		print('Minimum size is ' + str(CURSES_WINDOW_MIN_X) + ' rows by ' + str(CURSES_WINDOW_MIN_Y) + ' lines')
-		print('Current size is ' + str(stdscr.getmaxyx()[1]) + ' rows by ' + str(stdscr.getmaxyx()[0]) + ' lines')
+		print('Current size is ' + str(x) + ' rows by ' + str(y) + ' lines')
 
 if __name__ == "__main__":
 	try:
