@@ -24,13 +24,13 @@ SPEAKER_1_GPIO            = 12
 SPEAKER_2_GPIO            = 13
 HULL_INDICATOR_LEFT_GPIO  = 27
 HULL_INDICATOR_RIGHT_GPIO = 23
-GUN_FIRE_GPIO             = 24
+BBGUN_FIRE_GPIO           = 24
 RPI_UART_TX               = 14
 RPI_UART_RX               = 15
 RPI_DTR                   = 17
 
 # Arduino pins
-GUN_FIRE_READY_PIN            = 2
+BBGUN_FIRE_READY_PIN          = 2
 TURRET_LIGHTS_PIN             = 3
 CAMERA_IR_CONTROL_PIN         = 11
 BATTERY_VOLTAGE_LIION_RPI_PIN = 20 #A6
@@ -75,18 +75,6 @@ logY = 3
 logTotal = 1
 mainLoop = True
 
-# Vehicle states
-stateTracksLeft  = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-stateTracksRight = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-stateTurretHoriz = 0 # 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
-stateTurretVert  = 0 # 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
-
-stateHullIndicatorLeft  = False
-stateHullIndicatorRight = False
-stateGunFiring          = False
-stateTurretLights       = False
-stateCameraIR           = False
-
 stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_3_PWM
 stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_3_PWM
 stateTracksAcceleration = 2
@@ -111,10 +99,10 @@ import curses, time
 
 def trackLeftSpeed(speed):
 	if not FAKE_AN_ARDUINO:
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, abs(speed)) # Set track's speed on PWM pin. abs() is used to make sure the number isn't negative
 def trackLeft(velocity):
 	if not FAKE_AN_ARDUINO:
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, velocity)  # Set track's velocity on PWM pin
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, abs(velocity))  # Set track's absolute velocity (speed) on PWM pin
 		if velocity == 0: # Set tracks to not move
 			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
 			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
@@ -124,22 +112,22 @@ def trackLeft(velocity):
 		elif velocity < 0: # Set tracks to move backwards
 			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
 			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
-		
-def trackRightForward(speed):
+
+def trackRightSpeed(speed):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-def trackRightBackward(speed):
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, abs(speed)) # Set track's speed on PWM pin. abs() is used to make sure the number isn't negative
+def trackRight(velocity):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-def trackRightStop():
-	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, 0)
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, abs(velocity)) # Set track's absolute velocity (speed) on PWM pin
+		if velocity == 0: # Set tracks to not move
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		elif velocity > 0: # Set tracks to move forwards
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		elif velocity < 0: # Set tracks to move backwards
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
 
 def turretLeft(speed):
 	if not FAKE_AN_ARDUINO:
@@ -173,8 +161,8 @@ def turretYStop():
 		aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
 		aa.analogWrite(TURRET_Y_PWM_PIN, 0)
 
-def fireGun():
-	pass #Firing gun not implemented
+def fireBBGun():
+	pass #Firing BB gun not implemented
 
 def arduinoSetupPins():
 	if not FAKE_AN_ARDUINO:
@@ -377,13 +365,23 @@ def printToLogDebug(windowLog, text):
 def main_curses(stdscr):
 	# Global variables
 	global mainLoop
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateBBGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
 
 	# Local variables
+	stateTracksLeft  = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+	stateTracksRight = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+	stateTurretHoriz = 0 # Direction track is trying to move. 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
+	stateTurretVert  = 0 # Direction track is trying to move. 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
+	stateHullIndicatorLeft  = False
+	stateHullIndicatorRight = False
+	stateBBGunFiring        = False
+	stateTurretLights       = False
+	stateCameraIR           = False
 	stateLeftTracksCurrentVelocity = 0
-	trackLeftAccelerationLastSet = time.time()
+	stateRightTracksCurrentVelocity = 0
+	trackAccelerationLastSet = time.time()
 
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
@@ -432,16 +430,18 @@ def main_curses(stdscr):
 
 			# Velocity and acceleration calculation code
 			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
-				elapsedTime = time.time() - trackLeftAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
-				if stateTracksLeft == 1: # If vehicle is moving forward
+				elapsedTime = time.time() - trackAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
+				
+				# Velocity and acceleration calculation code - Left track
+				if stateTracksLeft == 1: # If track is trying to move forward
 					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
 					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
 						stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
-				elif stateTracksLeft == -1: # If vehicle is moving backward
+				elif stateTracksLeft == -1: # If track is trying to move backward
 					stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
 					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
 						stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
-				elif stateTracksLeft == 0: # If vehicle is stopping / stopped
+				elif stateTracksLeft == 0: # If track is stopping / stopped
 					if stateLeftTracksCurrentVelocity > 0: # If stateLeftTracksCurrentVelocity is positive
 						stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
 						if stateLeftTracksCurrentVelocity < 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
@@ -451,15 +451,43 @@ def main_curses(stdscr):
 						if stateLeftTracksCurrentVelocity > 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
 							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
 
+				# Velocity and acceleration calculation code - Right track
+				if stateTracksRight == 1: # If track is trying to move forward
+					stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
+					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
+				elif stateTracksRight == -1: # If track is trying to move backward
+					stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
+					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
+				elif stateTracksRight == 0: # If track is stopping / stopped
+					if stateRightTracksCurrentVelocity > 0: # If stateRightTracksCurrentVelocity is positive
+						stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
+						if stateRightTracksCurrentVelocity < 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
+							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
+					elif stateRightTracksCurrentVelocity < 0: # If stateRightTracksCurrentVelocity is negative
+						stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
+						if stateRightTracksCurrentVelocity > 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
+							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
+
 			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
-				if stateTracksLeft == 1: # If vehicle is moving forward...
+				# Left tracks
+				if stateTracksLeft == 1: # If track is trying to move forward...
 					stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
-				if stateTracksLeft == -1: # If vehicle is moving backward...
+				if stateTracksLeft == -1: # If track is trying to move backward...
 					stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
-				elif stateTracksLeft == 0: # If vehicle is stopping / stopped...
+				elif stateTracksLeft == 0: # If track is stopping / stopped...
 					stateLeftTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
 
-			trackLeftAccelerationLastSet = time.time() # Set trackLeftAccelerationLastSet to current Unix time
+				# Right tracks
+				if stateTracksRight == 1: # If track is trying to move forward...
+					stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed instantly
+				if stateTracksRight == -1: # If track is trying to move backward...
+					stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
+				elif stateTracksRight == 0: # If track is stopping / stopped...
+					stateRightTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+
+			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
 
 			# Vehicle states checking code
@@ -471,9 +499,9 @@ def main_curses(stdscr):
 				stateTurretLights = False
 			if stateCameraIR:
 				stateCameraIR = False
-			if stateGunFiring:
-				#fireGun()
-				stateGunFiring = False
+			if stateBBGunFiring:
+				#fireBBGun()
+				stateBBGunFiring = False
 
 			if stateTracksLeft == -1:
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
@@ -491,15 +519,19 @@ def main_curses(stdscr):
 				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 
 			if stateTracksRight == -1:
-				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
-				trackRightBackward(stateRightTracksTargetSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
+				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
 			elif stateTracksRight == 0:
-				printToLogDebug(windowLog, 'Right track stopped')
-				trackRightStop() # Stop all right track motion
-				stateTracksRight = 1000
+				if stateRightTracksCurrentVelocity == 0:
+					trackRight(0) # Stop all right track motion
+					printToLogDebug(windowLog, 'Right track stopped')
+					stateTracksRight = 1000
+				else:
+					trackRightSpeed(abs(stateRightTracksCurrentVelocity)) # Set right track pwm speed to stateRightTracksCurrentVelocity
+					printToLogDebug(windowLog, 'Right track stopping. Velocity: ' + str(stateRightTracksCurrentVelocity))
 			elif stateTracksRight == 1:
-				printToLogDebug(windowLog, 'Right track forward at speed: ' + str(stateRightTracksTargetSpeed))
-				trackRightForward(stateRightTracksTargetSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
+				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
 
 			if stateTurretHoriz == -1:
 				printToLogDebug(windowLog, 'Turret horiz left')
@@ -540,7 +572,7 @@ def main_curses(stdscr):
 					stateTurretVert = 0
 					stateHullIndicatorLeft = False
 					stateHullIndicatorRight = False
-					stateGunFiring = False
+					stateBBGunFiring = False
 					stateTurretLights = False
 					stateCameraIR = False
 					
@@ -554,7 +586,7 @@ def main_curses(stdscr):
 						stdscr.nodelay(True) # set getch() and getkey() to non-blocking
 						break # Exit the loop
 					stdscr.nodelay(True) # set getch() and getkey() back to non-blocking
-					trackLeftAccelerationLastSet = time.time() # Set trackLeftAccelerationLastSet to current Unix time
+					trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
 					printToLog(windowLog, 'All movement stopped and modules offline')
 
@@ -568,12 +600,12 @@ def main_curses(stdscr):
 					stateTurretVert = 0
 					stateHullIndicatorLeft = False
 					stateHullIndicatorRight = False
-					stateGunFiring = False
+					stateBBGunFiring = False
 					stateTurretLights = False
 					stateCameraIR = False
 
-				elif key == 32: # Space bar - fire gun
-					stateGunFiring = True
+				elif key == 32: # Space bar - fire BB gun
+					stateBBGunFiring = True
 				elif key == ord('q'): # Q - Turn left. Right track forward
 					if stateTracksRight == 1:
 						stateTracksRight = 0
