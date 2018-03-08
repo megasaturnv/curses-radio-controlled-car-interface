@@ -14,20 +14,19 @@ FAKE_RASPBERRYPI_GPIO = True # Fake Raspberry Pi GPIO pins. This setting disable
 CURSES_WINDOW_MIN_X = 126 # Minimum columns required to run interface
 CURSES_WINDOW_MIN_Y = 29  # Minimum rows required to run interface
 
+# Speed and acceleration settings
+TRACK_RIGHT_SPEED_1_PWM  = 150 # Track speeds. Value = 0 - 255
+TRACK_RIGHT_SPEED_2_PWM  = 200
+TRACK_RIGHT_SPEED_3_PWM  = 255
+TRACK_LEFT_SPEED_1_PWM  = 150
+TRACK_LEFT_SPEED_2_PWM  = 200
+TRACK_LEFT_SPEED_3_PWM  = 255
+
+TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 30 # Acceleration in (PWM units / second) for left track
+TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 30 # Acceleration in (PWM units / second) for right track
+
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
-
-# Raspberry Pi GPIO pins
-RPI_I2C_SDA               = 2
-RPI_I2C_SCL               = 3
-SPEAKER_1_GPIO            = 12
-SPEAKER_2_GPIO            = 13
-HULL_INDICATOR_LEFT_GPIO  = 27
-HULL_INDICATOR_RIGHT_GPIO = 23
-BBGUN_FIRE_GPIO           = 24
-RPI_UART_TX               = 14
-RPI_UART_RX               = 15
-RPI_DTR                   = 17
 
 # Arduino pins
 BBGUN_FIRE_READY_PIN          = 2
@@ -44,16 +43,6 @@ TRACK_LEFT_PWM_PIN       = 6
 TRACK_LEFT_FORWARD_PIN   = 16 #(A2)
 TRACK_LEFT_BACKWARD_PIN  = 15 #(A1)
 
-TRACK_RIGHT_SPEED_1_PWM  = 100
-TRACK_RIGHT_SPEED_2_PWM  = 180
-TRACK_RIGHT_SPEED_3_PWM  = 255
-TRACK_LEFT_SPEED_1_PWM  = 100
-TRACK_LEFT_SPEED_2_PWM  = 180
-TRACK_LEFT_SPEED_3_PWM  = 255
-
-TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 30 # Acceleration in (PWM units / second) for left track
-TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 30 # Acceleration in (PWM units / second) for right track
-
 TURRET_X_PWM_PIN = 5
 TURRET_LEFT_PIN  = 7
 TURRET_RIGHT_PIN = 4
@@ -65,6 +54,18 @@ TURRET_LEFT_SPEED_PWM  = 255
 TURRET_RIGHT_SPEED_PWM = 255
 TURRET_UP_SPEED_PWM    = 255
 TURRET_DOWN_SPEED_PWM  = 255
+
+# Raspberry Pi GPIO pins
+RPI_I2C_SDA               = 2
+RPI_I2C_SCL               = 3
+SPEAKER_1_GPIO            = 12
+SPEAKER_2_GPIO            = 13
+HULL_INDICATOR_LEFT_GPIO  = 27
+HULL_INDICATOR_RIGHT_GPIO = 23
+BBGUN_FIRE_GPIO           = 24
+RPI_UART_TX               = 14
+RPI_UART_RX               = 15
+RPI_DTR                   = 17
 
 
 ######################
@@ -164,9 +165,25 @@ def turretYStop():
 def fireBBGun():
 	pass #Firing BB gun not implemented
 
-def arduinoSetupPins():
+def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 	if not FAKE_AN_ARDUINO:
-		#printToLogDebug('Setting up pins')
+		printToLogDebug('Setting up pins state')
+		aa.digitalWrite(TRACK_LEFT_PWM_PIN, aa.LOW)
+		aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+		aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		aa.pinMode(TRACK_RIGHT_PWM_PIN, aa.LOW)
+		aa.pinMode(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+		aa.pinMode(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		aa.pinMode(TURRET_X_PWM_PIN, aa.LOW)
+		aa.pinMode(TURRET_LEFT_PIN, aa.LOW)
+		aa.pinMode(TURRET_RIGHT_PIN, aa.LOW)
+		aa.pinMode(TURRET_Y_PWM_PIN, aa.LOW)
+		aa.pinMode(TURRET_UP_PIN, aa.LOW)
+		aa.pinMode(TURRET_DOWN_PIN, aa.LOW)
+
+def arduinoSetupPinsMode(): # Setup Arduino pins' mode to their default values
+	if not FAKE_AN_ARDUINO:
+		printToLogDebug('Setting up pins mode')
 		#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
@@ -180,7 +197,7 @@ def arduinoSetupPins():
 		#aa.pinMode(TURRET_UP_PIN, aa.OUTPUT)
 		#aa.pinMode(TURRET_DOWN_PIN, aa.OUTPUT)
 
-def arduinoUnsetPins(): # Set Arduino pins to their default values
+def arduinoResetPins(): # Reset all Arduino pins to safe values (INPUT, LOW)
 	if not FAKE_AN_ARDUINO:
 		#printToLogDebug("Setting pins to input, low")
 		for i in range(1,20):
@@ -193,11 +210,19 @@ def arduinoUnsetPins(): # Set Arduino pins to their default values
 ## RASPBERRY PI GPIO FUNCTIONS ##
 #################################
 
-def gpioUnsetPins(): # Set Raspberry Pi GPIO pins to their default values
+def rpiGpioSetupPinsState(): # Setup Raspberry Pi GPIO state to their default values
 	if not FAKE_RASPBERRYPI_GPIO:
 		pass
 
-# Work in progress
+def rpiGpioSetupPinsMode(): # Setup Raspberry Pi GPIO mode to their default values
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+def rpiGpioResetPins(): # Reset all Raspberry Pi GPIO pins to safe values (INPUT, LOW)
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+# Not yet implemented. Work in progress
 
 
 ######################
@@ -424,6 +449,9 @@ def main_curses(stdscr):
 			aa = nanpy.ArduinoApi(connection=connection)
 			at = nanpy.arduinotree.ArduinoTree(connection=connection)
 
+		arduinoSetupPinsMode()
+		arduinoSetupPinsState()
+
 		# Main program loop
 		while mainLoop:
 			time.sleep(KEY_POLL_INTERVAL)
@@ -431,7 +459,7 @@ def main_curses(stdscr):
 			# Velocity and acceleration calculation code
 			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
 				elapsedTime = time.time() - trackAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
-				
+
 				# Velocity and acceleration calculation code - Left track
 				if stateTracksLeft == 1: # If track is trying to move forward
 					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
@@ -488,7 +516,6 @@ def main_curses(stdscr):
 					stateRightTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
 
 			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
-
 
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
@@ -562,9 +589,11 @@ def main_curses(stdscr):
 			if key != curses.ERR:
 				#stdscr.refresh()
 				if key == 27: # Esc key - quit
-					arduinoUnsetPins()
-					gpioUnsetPins()
-					
+					arduinoSetupPinsState() # Set all pins to their defaults
+					arduinoSetupPinsMode()
+					rpiGpioStupPinsState()
+					rpiGpioSetupPinsMode()
+
 					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
 					stateTracksRight = 0
@@ -575,7 +604,7 @@ def main_curses(stdscr):
 					stateBBGunFiring = False
 					stateTurretLights = False
 					stateCameraIR = False
-					
+
 					printToLog(windowLog, 'All movement stopped and modules offline')
 					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
 					stdscr.nodelay(False) # Set getch() and getkey() to blocking
@@ -585,13 +614,16 @@ def main_curses(stdscr):
 						mainLoop = False # The 'break' in the line below will exit the loop, but setting this variable is a backup
 						stdscr.nodelay(True) # set getch() and getkey() to non-blocking
 						break # Exit the loop
-					stdscr.nodelay(True) # set getch() and getkey() back to non-blocking
-					trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
-				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
+					else: #if not exiting the loop...
+						stdscr.nodelay(True) # set getch() and getkey() back to non-blocking
+						trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
+				elif key == 263: # Backspace key - abort all movement + modules. Set pins to their default state
 					printToLog(windowLog, 'All movement stopped and modules offline')
 
-					arduinoUnsetPins() # Set all pins to their safe defaults
-					gpioUnsetPins()
+					arduinoSetupPinsState() # Set all pins to their defaults
+					arduinoSetupPinsMode()
+					rpiGpioStupPinsState()
+					rpiGpioSetupPinsMode()
 
 					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
@@ -710,18 +742,18 @@ if __name__ == "__main__":
 		curses.wrapper(main_curses)
 	except Exception as e:
 	#except RuntimeError as e:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 		print('Exception')
 		print(e)
 	except KeyboardInterrupt as e:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 		print('KeyboardInterrupt')
 		print(e)
 	except:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 
-	arduinoUnsetPins()
-	gpioUnsetPins()
+	arduinoResetPins()
+	rpiGpioResetPins()
