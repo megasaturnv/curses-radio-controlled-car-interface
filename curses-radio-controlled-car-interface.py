@@ -167,7 +167,7 @@ def fireBBGun():
 
 def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 	if not FAKE_AN_ARDUINO:
-		printToLogDebug('Setting up pins state')
+		#printToLogDebug('Setting up pins state')
 		aa.digitalWrite(TRACK_LEFT_PWM_PIN, aa.LOW)
 		aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.LOW)
 		aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
@@ -183,7 +183,7 @@ def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 
 def arduinoSetupPinsMode(): # Setup Arduino pins' mode to their default values
 	if not FAKE_AN_ARDUINO:
-		printToLogDebug('Setting up pins mode')
+		#printToLogDebug('Setting up pins mode')
 		#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
