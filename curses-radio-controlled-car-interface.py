@@ -65,7 +65,7 @@ HULL_INDICATOR_RIGHT_GPIO = 23
 BBGUN_FIRE_GPIO           = 24
 RPI_UART_TX               = 14
 RPI_UART_RX               = 15
-RPI_DTR                   = 17
+RPI_UART_DTR              = 17
 
 
 ######################
@@ -217,6 +217,10 @@ def rpiGpioSetupPinsMode(): # Setup Raspberry Pi GPIO mode to their default valu
 		pass
 
 def rpiGpioResetPins(): # Reset all Raspberry Pi GPIO pins to safe values (INPUT, LOW)
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+def rpiResetArduino(): # Reset Arduino by pulsing RPI_UART_DTR pin
 	if not FAKE_RASPBERRYPI_GPIO:
 		pass
 
