@@ -22,8 +22,8 @@ TRACK_LEFT_SPEED_1_PWM  = 150
 TRACK_LEFT_SPEED_2_PWM  = 200
 TRACK_LEFT_SPEED_3_PWM  = 255
 
-TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 30 # Acceleration in (PWM units / second) for left track
-TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 30 # Acceleration in (PWM units / second) for right track
+TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 80 # Acceleration in (PWM units / second) for left track
+TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 80 # Acceleration in (PWM units / second) for right track
 
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
@@ -447,8 +447,10 @@ def main_curses(stdscr):
 			aa = nanpy.ArduinoApi(connection=connection)
 			at = nanpy.arduinotree.ArduinoTree(connection=connection)
 
+		arduinoSetupPinsState() # Set all pins to their defaults
 		arduinoSetupPinsMode()
-		arduinoSetupPinsState()
+		rpiGpioSetupPinsState()
+		rpiGpioSetupPinsMode()
 
 		# Main program loop
 		while mainLoop:
@@ -589,7 +591,7 @@ def main_curses(stdscr):
 				if key == 27: # Esc key - quit
 					arduinoSetupPinsState() # Set all pins to their defaults
 					arduinoSetupPinsMode()
-					rpiGpioStupPinsState()
+					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
 					stateTracksLeft = 0 # Set state variables to their non-functional values
@@ -620,7 +622,7 @@ def main_curses(stdscr):
 
 					arduinoSetupPinsState() # Set all pins to their defaults
 					arduinoSetupPinsMode()
-					rpiGpioStupPinsState()
+					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
 					stateTracksLeft = 0 # Set state variables to their non-functional values
