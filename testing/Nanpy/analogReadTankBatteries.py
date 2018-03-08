@@ -21,7 +21,7 @@ tankModulesLiIonSecondCell =     tankModulesLiIonCombined - tankModulesLiIonFirs
 
 print('A6 BATTERY_VOLTAGE_LIION_RPI_PIN  RaspberryPiLiIonCombined        7.4v nominal: ' + str(RaspberryPiLiIonCombined))
 print('                                  RaspberryPiLiIonAveragePerCell  3.7v nominal: ' + str(RaspberryPiLiIonAveragePerCell))
-
+print('')
 print('A3 BATTERY_VOLTAGE_LIION_1X3_PIN  tankModulesLiIonFirstCell       3.7v nominal: ' + str(tankModulesLiIonFirstCell))
-print('                                  tankModulesLiIonSecondCell      3.7v nominal: ' + str(tankModulesLiIonCombined))
-print('A7 BATTERY_VOLTAGE_LIION_2X3_PIN  tankModulesLiIonCombined        7.4v nominal: ' + str(tankModulesLiIonSecondCell))
+print('                                  tankModulesLiIonSecondCell      3.7v nominal: ' + str(tankModulesLiIonSecondCell))
+print('A7 BATTERY_VOLTAGE_LIION_2X3_PIN  tankModulesLiIonCombined        7.4v nominal: ' + str(tankModulesLiIonCombined))
