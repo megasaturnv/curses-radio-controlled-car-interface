@@ -14,23 +14,22 @@ FAKE_RASPBERRYPI_GPIO = True # Fake Raspberry Pi GPIO pins. This setting disable
 CURSES_WINDOW_MIN_X = 126 # Minimum columns required to run interface
 CURSES_WINDOW_MIN_Y = 29  # Minimum rows required to run interface
 
+# Speed and acceleration settings
+TRACK_RIGHT_SPEED_1_PWM  = 150 # Track speeds. Value = 0 - 255
+TRACK_RIGHT_SPEED_2_PWM  = 200
+TRACK_RIGHT_SPEED_3_PWM  = 255
+TRACK_LEFT_SPEED_1_PWM  = 150
+TRACK_LEFT_SPEED_2_PWM  = 200
+TRACK_LEFT_SPEED_3_PWM  = 255
+
+TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 80 # Acceleration in (PWM units / second) for left track
+TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 80 # Acceleration in (PWM units / second) for right track
+
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
 
-# Raspberry Pi GPIO pins
-RPI_I2C_SDA               = 2
-RPI_I2C_SCL               = 3
-SPEAKER_1_GPIO            = 12
-SPEAKER_2_GPIO            = 13
-HULL_INDICATOR_LEFT_GPIO  = 27
-HULL_INDICATOR_RIGHT_GPIO = 23
-GUN_FIRE_GPIO             = 24
-RPI_UART_TX               = 14
-RPI_UART_RX               = 15
-RPI_DTR                   = 17
-
 # Arduino pins
-GUN_FIRE_READY_PIN            = 2
+BBGUN_FIRE_READY_PIN          = 2
 TURRET_LIGHTS_PIN             = 3
 CAMERA_IR_CONTROL_PIN         = 11
 BATTERY_VOLTAGE_LIION_RPI_PIN = 20 #A6
@@ -44,16 +43,6 @@ TRACK_LEFT_PWM_PIN       = 6
 TRACK_LEFT_FORWARD_PIN   = 16 #(A2)
 TRACK_LEFT_BACKWARD_PIN  = 15 #(A1)
 
-TRACK_RIGHT_SPEED_1_PWM  = 100
-TRACK_RIGHT_SPEED_2_PWM  = 180
-TRACK_RIGHT_SPEED_3_PWM  = 255
-TRACK_LEFT_SPEED_1_PWM  = 100
-TRACK_LEFT_SPEED_2_PWM  = 180
-TRACK_LEFT_SPEED_3_PWM  = 255
-
-TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 50 # Acceleration in (PWM units / second) for left track
-TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 50 # Acceleration in (PWM units / second) for right track
-
 TURRET_X_PWM_PIN = 5
 TURRET_LEFT_PIN  = 7
 TURRET_RIGHT_PIN = 4
@@ -66,6 +55,18 @@ TURRET_RIGHT_SPEED_PWM = 255
 TURRET_UP_SPEED_PWM    = 255
 TURRET_DOWN_SPEED_PWM  = 255
 
+# Raspberry Pi GPIO pins
+RPI_I2C_SDA               = 2
+RPI_I2C_SCL               = 3
+SPEAKER_1_GPIO            = 12
+SPEAKER_2_GPIO            = 13
+HULL_INDICATOR_LEFT_GPIO  = 27
+HULL_INDICATOR_RIGHT_GPIO = 23
+BBGUN_FIRE_GPIO           = 24
+RPI_UART_TX               = 14
+RPI_UART_RX               = 15
+RPI_DTR                   = 17
+
 
 ######################
 ## GLOBAL VARIABLES ##
@@ -74,18 +75,6 @@ TURRET_DOWN_SPEED_PWM  = 255
 logY = 3
 logTotal = 1
 mainLoop = True
-
-# Vehicle states
-stateTracksLeft  = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-stateTracksRight = 0 # 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-stateTurretHoriz = 0 # 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
-stateTurretVert  = 0 # 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
-
-stateHullIndicatorLeft  = False
-stateHullIndicatorRight = False
-stateGunFiring          = False
-stateTurretLights       = False
-stateCameraIR           = False
 
 stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_3_PWM
 stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_3_PWM
@@ -109,37 +98,37 @@ import curses, time
 ## ARDUINO NANPY FUNCTIONS ##
 #############################
 
-def trackLeftForward(speed):
+def trackLeftSpeed(speed):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
-def trackLeftBackward(speed):
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, abs(speed)) # Set track's speed on PWM pin. abs() is used to make sure the number isn't negative
+def trackLeft(velocity):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, speed)
-def trackLeftStop():
-	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_LEFT_PWM_PIN, 0)
+		aa.analogWrite(TRACK_LEFT_PWM_PIN, abs(velocity))  # Set track's absolute velocity (speed) on PWM pin
+		if velocity == 0: # Set tracks to not move
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		elif velocity > 0: # Set tracks to move forwards
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.HIGH)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		elif velocity < 0: # Set tracks to move backwards
+			aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.HIGH)
 
-def trackRightForward(speed):
+def trackRightSpeed(speed):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-def trackRightBackward(speed):
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, abs(speed)) # Set track's speed on PWM pin. abs() is used to make sure the number isn't negative
+def trackRight(velocity):
 	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, speed)
-def trackRightStop():
-	if not FAKE_AN_ARDUINO:
-		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
-		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
-		aa.analogWrite(TRACK_RIGHT_PWM_PIN, 0)
+		aa.analogWrite(TRACK_RIGHT_PWM_PIN, abs(velocity)) # Set track's absolute velocity (speed) on PWM pin
+		if velocity == 0: # Set tracks to not move
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		elif velocity > 0: # Set tracks to move forwards
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.HIGH)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		elif velocity < 0: # Set tracks to move backwards
+			aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+			aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.HIGH)
 
 def turretLeft(speed):
 	if not FAKE_AN_ARDUINO:
@@ -173,12 +162,26 @@ def turretYStop():
 		aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
 		aa.analogWrite(TURRET_Y_PWM_PIN, 0)
 
-def fireGun():
-	pass #Firing gun not implemented
+def fireBBGun():
+	pass #Firing BB gun not implemented
 
-def arduinoSetupPins():
+def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 	if not FAKE_AN_ARDUINO:
-		#printToLogDebug('Setting up pins')
+		aa.digitalWrite(TRACK_LEFT_PWM_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_RIGHT_PWM_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_RIGHT_FORWARD_PIN, aa.LOW)
+		aa.digitalWrite(TRACK_RIGHT_BACKWARD_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_X_PWM_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_LEFT_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_RIGHT_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_Y_PWM_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_UP_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_DOWN_PIN, aa.LOW)
+
+def arduinoSetupPinsMode(): # Setup Arduino pins' mode to their default values
+	if not FAKE_AN_ARDUINO:
 		#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
@@ -192,7 +195,7 @@ def arduinoSetupPins():
 		#aa.pinMode(TURRET_UP_PIN, aa.OUTPUT)
 		#aa.pinMode(TURRET_DOWN_PIN, aa.OUTPUT)
 
-def arduinoUnsetPins(): # Set Arduino pins to their default values
+def arduinoResetPins(): # Reset all Arduino pins to safe values (INPUT, LOW)
 	if not FAKE_AN_ARDUINO:
 		#printToLogDebug("Setting pins to input, low")
 		for i in range(1,20):
@@ -205,11 +208,19 @@ def arduinoUnsetPins(): # Set Arduino pins to their default values
 ## RASPBERRY PI GPIO FUNCTIONS ##
 #################################
 
-def gpioUnsetPins(): # Set Raspberry Pi GPIO pins to their default values
+def rpiGpioSetupPinsState(): # Setup Raspberry Pi GPIO state to their default values
 	if not FAKE_RASPBERRYPI_GPIO:
 		pass
 
-# Work in progress
+def rpiGpioSetupPinsMode(): # Setup Raspberry Pi GPIO mode to their default values
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+def rpiGpioResetPins(): # Reset all Raspberry Pi GPIO pins to safe values (INPUT, LOW)
+	if not FAKE_RASPBERRYPI_GPIO:
+		pass
+
+# Not yet implemented. Work in progress
 
 
 ######################
@@ -375,10 +386,25 @@ def printToLogDebug(windowLog, text):
 ##################
 
 def main_curses(stdscr):
-	global mainLoop # Global variables
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
+	# Global variables
+	global mainLoop
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateBBGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
+
+	# Local variables
+	stateTracksLeft  = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+	stateTracksRight = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
+	stateTurretHoriz = 0 # Direction track is trying to move. 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
+	stateTurretVert  = 0 # Direction track is trying to move. 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
+	stateHullIndicatorLeft  = False
+	stateHullIndicatorRight = False
+	stateBBGunFiring        = False
+	stateTurretLights       = False
+	stateCameraIR           = False
+	stateLeftTracksCurrentVelocity = 0
+	stateRightTracksCurrentVelocity = 0
+	trackAccelerationLastSet = time.time()
 
 	#stdscr = curses.initscr() # setup intial window
 	#curses.start_color() # Enable curses colour
@@ -421,44 +447,118 @@ def main_curses(stdscr):
 			aa = nanpy.ArduinoApi(connection=connection)
 			at = nanpy.arduinotree.ArduinoTree(connection=connection)
 
+		arduinoSetupPinsState() # Set all pins to their defaults
+		arduinoSetupPinsMode()
+		rpiGpioSetupPinsState()
+		rpiGpioSetupPinsMode()
+
 		# Main program loop
 		while mainLoop:
 			time.sleep(KEY_POLL_INTERVAL)
+
+			# Velocity and acceleration calculation code
+			if stateTracksAcceleration == 1: # If stateTracksAcceleration == 1, accelerate slowly
+				elapsedTime = time.time() - trackAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
+
+				# Velocity and acceleration calculation code - Left track
+				if stateTracksLeft == 1: # If track is trying to move forward
+					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
+					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
+				elif stateTracksLeft == -1: # If track is trying to move backward
+					stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
+					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
+				elif stateTracksLeft == 0: # If track is stopping / stopped
+					if stateLeftTracksCurrentVelocity > 0: # If stateLeftTracksCurrentVelocity is positive
+						stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
+						if stateLeftTracksCurrentVelocity < 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
+							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
+					elif stateLeftTracksCurrentVelocity < 0: # If stateLeftTracksCurrentVelocity is negative
+						stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
+						if stateLeftTracksCurrentVelocity > 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
+							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
+
+				# Velocity and acceleration calculation code - Right track
+				if stateTracksRight == 1: # If track is trying to move forward
+					stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
+					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
+				elif stateTracksRight == -1: # If track is trying to move backward
+					stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
+					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
+				elif stateTracksRight == 0: # If track is stopping / stopped
+					if stateRightTracksCurrentVelocity > 0: # If stateRightTracksCurrentVelocity is positive
+						stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
+						if stateRightTracksCurrentVelocity < 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
+							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
+					elif stateRightTracksCurrentVelocity < 0: # If stateRightTracksCurrentVelocity is negative
+						stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
+						if stateRightTracksCurrentVelocity > 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
+							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
+
+			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
+				# Left tracks
+				if stateTracksLeft == 1: # If track is trying to move forward...
+					stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
+				if stateTracksLeft == -1: # If track is trying to move backward...
+					stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
+				elif stateTracksLeft == 0: # If track is stopping / stopped...
+					stateLeftTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+
+				# Right tracks
+				if stateTracksRight == 1: # If track is trying to move forward...
+					stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed instantly
+				if stateTracksRight == -1: # If track is trying to move backward...
+					stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
+				elif stateTracksRight == 0: # If track is stopping / stopped...
+					stateRightTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+
+			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
 			# Vehicle states checking code
 			if stateHullIndicatorLeft:
 				stateHullIndicatorLeft = False
 			if stateHullIndicatorRight:
 				stateHullIndicatorRight = False
-			if stateGunFiring:
-				#fireGun()
-				stateGunFiring = False
 			if stateTurretLights:
 				stateTurretLights = False
 			if stateCameraIR:
 				stateCameraIR = False
+			if stateBBGunFiring:
+				#fireBBGun()
+				stateBBGunFiring = False
 
 			if stateTracksLeft == -1:
-				printToLogDebug(windowLog, 'Left track backward at speed: ' + str(stateLeftTracksTargetSpeed))
-				trackLeftBackward(stateLeftTracksTargetSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
+				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 			elif stateTracksLeft == 0:
-				printToLogDebug(windowLog, 'Left track stopped')
-				trackLeftStop() # Stop all left track motion
-				stateTracksLeft = 1000
+				if stateLeftTracksCurrentVelocity == 0:
+					trackLeft(0) # Stop all left track motion
+					printToLogDebug(windowLog, 'Left track stopped')
+					stateTracksLeft = 1000
+				else:
+					trackLeftSpeed(abs(stateLeftTracksCurrentVelocity)) # Set left track pwm speed to stateLeftTracksCurrentVelocity
+					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(stateLeftTracksCurrentVelocity))
 			elif stateTracksLeft == 1:
-				printToLogDebug(windowLog, 'Left track forward at speed: ' + str(stateLeftTracksTargetSpeed))
-				trackLeftForward(stateLeftTracksTargetSpeed) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
+				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 
 			if stateTracksRight == -1:
-				printToLogDebug(windowLog, 'Right track backward at speed: ' + str(stateRightTracksTargetSpeed))
-				trackRightBackward(stateRightTracksTargetSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
+				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
 			elif stateTracksRight == 0:
-				printToLogDebug(windowLog, 'Right track stopped')
-				trackRightStop() # Stop all right track motion
-				stateTracksRight = 1000
+				if stateRightTracksCurrentVelocity == 0:
+					trackRight(0) # Stop all right track motion
+					printToLogDebug(windowLog, 'Right track stopped')
+					stateTracksRight = 1000
+				else:
+					trackRightSpeed(abs(stateRightTracksCurrentVelocity)) # Set right track pwm speed to stateRightTracksCurrentVelocity
+					printToLogDebug(windowLog, 'Right track stopping. Velocity: ' + str(stateRightTracksCurrentVelocity))
 			elif stateTracksRight == 1:
-				printToLogDebug(windowLog, 'Right track forward at speed: ' + str(stateRightTracksTargetSpeed))
-				trackRightForward(stateRightTracksTargetSpeed) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
+				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
 
 			if stateTurretHoriz == -1:
 				printToLogDebug(windowLog, 'Turret horiz left')
@@ -489,8 +589,22 @@ def main_curses(stdscr):
 			if key != curses.ERR:
 				#stdscr.refresh()
 				if key == 27: # Esc key - quit
-					arduinoUnsetPins()
-					gpioUnsetPins()
+					arduinoSetupPinsState() # Set all pins to their defaults
+					arduinoSetupPinsMode()
+					rpiGpioSetupPinsState()
+					rpiGpioSetupPinsMode()
+
+					stateTracksLeft = 0 # Set state variables to their non-functional values
+					stateLeftTracksCurrentVelocity = 0
+					stateTracksRight = 0
+					stateTurretHoriz = 0
+					stateTurretVert = 0
+					stateHullIndicatorLeft = False
+					stateHullIndicatorRight = False
+					stateBBGunFiring = False
+					stateTurretLights = False
+					stateCameraIR = False
+
 					printToLog(windowLog, 'All movement stopped and modules offline')
 					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
 					stdscr.nodelay(False) # Set getch() and getkey() to blocking
@@ -500,24 +614,30 @@ def main_curses(stdscr):
 						mainLoop = False # The 'break' in the line below will exit the loop, but setting this variable is a backup
 						stdscr.nodelay(True) # set getch() and getkey() to non-blocking
 						break # Exit the loop
-					stdscr.nodelay(True) # set getch() and getkey() to non-blocking
-				elif key == 263: # Backspace key - abort all movement + modules. Reset pins to their default state
+					else: #if not exiting the loop...
+						stdscr.nodelay(True) # set getch() and getkey() back to non-blocking
+						trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
+				elif key == 263: # Backspace key - abort all movement + modules. Set pins to their default state
 					printToLog(windowLog, 'All movement stopped and modules offline')
 
-					arduinoUnsetPins() # Set all pins to their safe defaults
-					gpioUnsetPins()
+					arduinoSetupPinsState() # Set all pins to their defaults
+					arduinoSetupPinsMode()
+					rpiGpioSetupPinsState()
+					rpiGpioSetupPinsMode()
 
 					stateTracksLeft = 0 # Set state variables to their non-functional values
+					stateLeftTracksCurrentVelocity = 0
 					stateTracksRight = 0
 					stateTurretHoriz = 0
 					stateTurretVert = 0
 					stateHullIndicatorLeft = False
 					stateHullIndicatorRight = False
-					stateGunFiring = False
+					stateBBGunFiring = False
 					stateTurretLights = False
 					stateCameraIR = False
-				elif key == 32: # Space bar - fire gun
-					stateGunFiring = True
+
+				elif key == 32: # Space bar - fire BB gun
+					stateBBGunFiring = True
 				elif key == ord('q'): # Q - Turn left. Right track forward
 					if stateTracksRight == 1:
 						stateTracksRight = 0
@@ -556,16 +676,16 @@ def main_curses(stdscr):
 					else:
 						stateTracksLeft = 1
 						stateTracksRight = -1
-				elif key == ord('t'): # T - Turn right. Right track forward
-					if stateTracksRight == 1:
-						stateTracksRight = 0
-					else:
-						stateTracksRight = 1
-				elif key == ord('g'): # G - Turn right. Left track backward
-					if stateTracksLeft == -1:
+				elif key == ord('t'): # T - Turn right. Left track forward
+					if stateTracksLeft == 1:
 						stateTracksLeft = 0
 					else:
-						stateTracksLeft = -1
+						stateTracksLeft = 1
+				elif key == ord('g'): # G - Turn right. Right track backward
+					if stateTracksRight == -1:
+						stateTracksRight = 0
+					else:
+						stateTracksRight = -1
 				elif key == ord('i'): # I - Turret up
 					if stateTurretVert == 1:
 						stateTurretVert = 0
@@ -622,18 +742,18 @@ if __name__ == "__main__":
 		curses.wrapper(main_curses)
 	except Exception as e:
 	#except RuntimeError as e:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 		print('Exception')
 		print(e)
 	except KeyboardInterrupt as e:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 		print('KeyboardInterrupt')
 		print(e)
 	except:
-		arduinoUnsetPins()
-		gpioUnsetPins()
+		arduinoResetPins()
+		rpiGpioResetPins()
 
-	arduinoUnsetPins()
-	gpioUnsetPins()
+	arduinoResetPins()
+	rpiGpioResetPins()
