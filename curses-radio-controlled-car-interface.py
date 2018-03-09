@@ -388,21 +388,26 @@ def printToLogDebug(windowLog, text):
 def main_curses(stdscr):
 	# Global variables
 	global mainLoop
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateHullIndicatorLeft, stateHullIndicatorRight, stateBBGunFiring, stateTurretLights, stateCameraIR, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
+	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateBBGunFiring, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
 
 	# Local variables
+	stateHullIndicatorLeft          = False
+	stateHullIndicatorLeftModified  = True
+	stateHullIndicatorRight         = False
+	stateHullIndicatorRightModified = True
+	stateTurretLights               = False
+	stateTurretLightsModified       = True
+	stateCameraIR                   = False
+	stateCameraIRModified           = True
+	stateBBGunFiring                = False
+
 	stateTracksLeft  = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
 	stateTracksRight = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
 	stateTurretHoriz = 0 # Direction track is trying to move. 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
 	stateTurretVert  = 0 # Direction track is trying to move. 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
-	stateHullIndicatorLeft  = False
-	stateHullIndicatorRight = False
-	stateBBGunFiring        = False
-	stateTurretLights       = False
-	stateCameraIR           = False
-	stateLeftTracksCurrentVelocity = 0
+	stateLeftTracksCurrentVelocity  = 0
 	stateRightTracksCurrentVelocity = 0
 	trackAccelerationLastSet = time.time()
 
@@ -519,19 +524,7 @@ def main_curses(stdscr):
 
 			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
-			# Vehicle states checking code
-			if stateHullIndicatorLeft:
-				stateHullIndicatorLeft = False
-			if stateHullIndicatorRight:
-				stateHullIndicatorRight = False
-			if stateTurretLights:
-				stateTurretLights = False
-			if stateCameraIR:
-				stateCameraIR = False
-			if stateBBGunFiring:
-				#fireBBGun()
-				stateBBGunFiring = False
-
+			# Vehicle states checking code - tracks
 			if stateTracksLeft == -1:
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
 				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
@@ -584,6 +577,26 @@ def main_curses(stdscr):
 				printToLogDebug(windowLog, 'Turret vert up')
 				turretUp(TURRET_UP_SPEED_PWM) # Set turret vertical motion
 
+			# Vehicle states checking code - modules
+			if stateHullIndicatorLeftModified:
+				stateHullIndicatorLeftModified = False
+			if stateHullIndicatorRightModified:
+				stateHullIndicatorRightModified = False
+			if stateTurretLightsModified:
+				if stateTurretLights: # Turn turret lights on
+					printToLogDebug(windowLog, 'Turning turret lights on')
+					if not FAKE_AN_ARDUINO:
+						aa.digitalWrite(TURRET_LIGHTS_PIN, aa.LOW) # Pull PNP transistor base low to enable current flow and turn on turret lights
+				else:
+					printToLogDebug(windowLog, 'Turning turret lights off')
+					if not FAKE_AN_ARDUINO:
+						aa.digitalWrite(TURRET_LIGHTS_PIN, aa.LOW) # Set PNP transistor base to high to stop current flow and turn off turret lights
+				stateTurretLightsModified = False
+			if stateCameraIRModified:
+				stateCameraIRModified = False
+			if stateBBGunFiring:
+				#fireBBGun()
+				stateBBGunFiring = False
 
 			# Key input code
 			key = stdscr.getch()
@@ -599,13 +612,18 @@ def main_curses(stdscr):
 					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
 					stateTracksRight = 0
+					stateRightTracksCurrentVelocity = 0
 					stateTurretHoriz = 0
 					stateTurretVert = 0
-					stateHullIndicatorLeft = False
-					stateHullIndicatorRight = False
-					stateBBGunFiring = False
-					stateTurretLights = False
-					stateCameraIR = False
+					stateHullIndicatorLeft          = False
+					stateHullIndicatorLeftModified  = True
+					stateHullIndicatorRight         = False
+					stateHullIndicatorRightModified = True
+					stateBBGunFiring                = False
+					stateBBGunFiringModified        = True
+					stateTurretLights               = False
+					stateTurretLightsModified       = True
+					stateCameraIR                   = False
 
 					printToLog(windowLog, 'All movement stopped and modules offline')
 					printToLog(windowLog, 'Are you sure you want to quit? (y/n)')
@@ -630,13 +648,18 @@ def main_curses(stdscr):
 					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
 					stateTracksRight = 0
+					stateRightTracksCurrentVelocity = 0
 					stateTurretHoriz = 0
 					stateTurretVert = 0
-					stateHullIndicatorLeft = False
-					stateHullIndicatorRight = False
-					stateBBGunFiring = False
-					stateTurretLights = False
-					stateCameraIR = False
+					stateHullIndicatorLeft          = False
+					stateHullIndicatorLeftModified  = True
+					stateHullIndicatorRight         = False
+					stateHullIndicatorRightModified = True
+					stateBBGunFiring                = False
+					stateBBGunFiringModified        = True
+					stateTurretLights               = False
+					stateTurretLightsModified       = True
+					stateCameraIR                   = False
 
 				elif key == 32: # Space bar - fire BB gun
 					stateBBGunFiring = True
@@ -726,6 +749,18 @@ def main_curses(stdscr):
 				elif key == ord('5'): # 5 - Set tracks to fastest acceleration
 					stateTracksAcceleration = 2
 					printToLog(windowLog, 'Acceleration changed to 2')
+				elif key == ord('6'): # 6 - Toggle left indicator LED
+					printToLog(windowLog, 'Left indicator')
+				elif key == ord('7'): # 7 - Toggle right indicator LED
+					printToLog(windowLog, 'Right indicator')
+				elif key == ord('8'): # 8 - Toggle turret LEDs
+					stateTurretLights = not stateTurretLights
+					stateTurretLightsModified = True
+					printToLog(windowLog, 'Toggled turret LEDs to: ' + str(stateTurretLights))
+				elif key == ord('9'): # 9 - Toggle IR LEDs
+					printToLog(windowLog, 'IR LEDs')
+				elif key == ord('0'): # 0 - Fire BB gun
+					printToLog(windowLog, 'BB gun')
 				else:
 					printToLog(windowLog, 'Warning: Pressed key not recognised: ' + chr(key) + ' = ' + str(key))
 
