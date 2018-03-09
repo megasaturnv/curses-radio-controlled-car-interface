@@ -167,6 +167,13 @@ def fireBBGun():
 
 def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 	if not FAKE_AN_ARDUINO:
+		aa.digitalWrite(BBGUN_FIRE_READY_PIN, aa.LOW)
+		aa.digitalWrite(TURRET_LIGHTS_PIN, aa.HIGH)
+		aa.digitalWrite(CAMERA_IR_CONTROL_PIN, aa.LOW)
+		aa.digitalWrite(BATTERY_VOLTAGE_LIION_RPI_PIN, aa.LOW) #A6
+		aa.digitalWrite(BATTERY_VOLTAGE_LIION_1X3_PIN, aa.LOW) #A3
+		aa.digitalWrite(BATTERY_VOLTAGE_LIION_2X3_PIN, aa.LOW) #A7
+
 		aa.digitalWrite(TRACK_LEFT_PWM_PIN, aa.LOW)
 		aa.digitalWrite(TRACK_LEFT_FORWARD_PIN, aa.LOW)
 		aa.digitalWrite(TRACK_LEFT_BACKWARD_PIN, aa.LOW)
@@ -182,6 +189,13 @@ def arduinoSetupPinsState(): # Setup Arduino pins' state to their default values
 
 def arduinoSetupPinsMode(): # Setup Arduino pins' mode to their default values
 	if not FAKE_AN_ARDUINO:
+		#aa.pinMode(BBGUN_FIRE_READY_PIN, aa.OUTPUT)
+		aa.pinMode(TURRET_LIGHTS_PIN, aa.OUTPUT)
+		#aa.pinMode(CAMERA_IR_CONTROL_PIN, aa.OUTPUT)
+		aa.pinMode(BATTERY_VOLTAGE_LIION_RPI_PIN, aa.INPUT) #A6
+		aa.pinMode(BATTERY_VOLTAGE_LIION_1X3_PIN, aa.INPUT) #A3
+		aa.pinMode(BATTERY_VOLTAGE_LIION_2X3_PIN, aa.INPUT) #A7
+
 		#aa.pinMode(TRACK_LEFT_PWM_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_FORWARD_PIN, aa.OUTPUT)
 		#aa.pinMode(TRACK_LEFT_BACKWARD_PIN, aa.OUTPUT)
@@ -590,7 +604,7 @@ def main_curses(stdscr):
 				else:
 					printToLogDebug(windowLog, 'Turning turret lights off')
 					if not FAKE_AN_ARDUINO:
-						aa.digitalWrite(TURRET_LIGHTS_PIN, aa.LOW) # Set PNP transistor base to high to stop current flow and turn off turret lights
+						aa.digitalWrite(TURRET_LIGHTS_PIN, aa.HIGH) # Set PNP transistor base to high to stop current flow and turn off turret lights
 				stateTurretLightsModified = False
 			if stateCameraIRModified:
 				stateCameraIRModified = False
