@@ -213,8 +213,8 @@ def arduinoResetPins(): # Reset all Arduino pins to safe values (INPUT, LOW)
 	if not FAKE_AN_ARDUINO:
 		#printToLogDebug("Setting pins to input, low")
 		for i in range(1,20):
-			aa.digitalWrite(i, aa.LOW)
 			aa.pinMode(i, aa.INPUT)
+			aa.digitalWrite(i, aa.LOW)
 			time.sleep(0.05)
 
 
