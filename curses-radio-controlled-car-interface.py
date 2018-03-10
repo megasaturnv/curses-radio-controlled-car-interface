@@ -432,8 +432,8 @@ def main_curses(stdscr):
 	stateTracksRight = 'sm'
 	stateTurretHoriz = 'sm'
 	stateTurretVert  = 'sm'
-	stateLeftTracksCurrentVelocity  = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
-	stateRightTracksCurrentVelocity = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
+	trackLeftCurrentVelocity  = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
+	trackRightCurrentVelocity = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
 	trackAccelerationLastSet = time.time()
 
 	# Curses settings
@@ -494,91 +494,91 @@ def main_curses(stdscr):
 
 				# Velocity and acceleration calculation code - Left track
 				if stateTracksLeft == 'fa': # If track is accelerating forward
-					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
-					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
-						stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
+					trackLeftCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackLeftCurrentVelocity
+					if abs(trackLeftCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						trackLeftCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
 				elif stateTracksLeft == 'ba': # If track is accelerating backward
-					stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
-					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
-						stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
+					trackLeftCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackLeftCurrentVelocity
+					if abs(trackLeftCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
+						trackLeftCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
 				elif stateTracksLeft == 'sm': # If track is stopping / stopped
-					if stateLeftTracksCurrentVelocity > 0: # If stateLeftTracksCurrentVelocity is positive
-						stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
-						if stateLeftTracksCurrentVelocity < 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
-							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
-					elif stateLeftTracksCurrentVelocity < 0: # If stateLeftTracksCurrentVelocity is negative
-						stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
-						if stateLeftTracksCurrentVelocity > 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
-							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
+					if trackLeftCurrentVelocity > 0: # If trackLeftCurrentVelocity is positive
+						trackLeftCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackLeftCurrentVelocity
+						if trackLeftCurrentVelocity < 0: # If above calculation set trackLeftCurrentVelocity to a negative value...
+							trackLeftCurrentVelocity = 0 # Set trackLeftCurrentVelocity to 0
+					elif trackLeftCurrentVelocity < 0: # If trackLeftCurrentVelocity is negative
+						trackLeftCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackLeftCurrentVelocity
+						if trackLeftCurrentVelocity > 0: # If above calculation set trackLeftCurrentVelocity to a negative value...
+							trackLeftCurrentVelocity = 0 # Set trackLeftCurrentVelocity to 0
 
 				# Velocity and acceleration calculation code - Right track
 				if stateTracksRight == 'fa': # If track is accelerating forward
-					stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
-					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
-						stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
+					trackRightCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackRightCurrentVelocity
+					if abs(trackRightCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						trackRightCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
 				elif stateTracksRight == 'ba': # If track is accelerating backward
-					stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
-					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
-						stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
+					trackRightCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackRightCurrentVelocity
+					if abs(trackRightCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
+						trackRightCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
 				elif stateTracksRight == 'sm': # If track is stopping / stopped
-					if stateRightTracksCurrentVelocity > 0: # If stateRightTracksCurrentVelocity is positive
-						stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
-						if stateRightTracksCurrentVelocity < 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
-							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
-					elif stateRightTracksCurrentVelocity < 0: # If stateRightTracksCurrentVelocity is negative
-						stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
-						if stateRightTracksCurrentVelocity > 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
-							stateRightTracksCurrentVelocity = 0 # Set stateRightTracksCurrentVelocity to 0
+					if trackRightCurrentVelocity > 0: # If trackRightCurrentVelocity is positive
+						trackRightCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackRightCurrentVelocity
+						if trackRightCurrentVelocity < 0: # If above calculation set trackRightCurrentVelocity to a negative value...
+							trackRightCurrentVelocity = 0 # Set trackRightCurrentVelocity to 0
+					elif trackRightCurrentVelocity < 0: # If trackRightCurrentVelocity is negative
+						trackRightCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackRightCurrentVelocity
+						if trackRightCurrentVelocity > 0: # If above calculation set trackRightCurrentVelocity to a negative value...
+							trackRightCurrentVelocity = 0 # Set trackRightCurrentVelocity to 0
 
 			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
 				# Left tracks
 				if stateTracksLeft == 'fa': # If track is accelerating forward...
-					stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
+					trackLeftCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
 				if stateTracksLeft == 'ba': # If track is accelerating backward...
-					stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
+					trackLeftCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
 				elif stateTracksLeft == 'sm': # If track is stopping / stopped...
-					stateLeftTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+					trackLeftCurrentVelocity = 0 # Set current velocity to 0 instantly
 
 				# Right tracks
 				if stateTracksRight == 'fa': # If track is accelerating forward...
-					stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed instantly
+					trackRightCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed instantly
 				if stateTracksRight == 'ba': # If track is accelerating backward...
-					stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
+					trackRightCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
 				elif stateTracksRight == 'sm': # If track is stopping / stopped...
-					stateRightTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
+					trackRightCurrentVelocity = 0 # Set current velocity to 0 instantly
 
 			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
 			# Vehicle states checking code - tracks
 			if stateTracksLeft == 'ba':
-				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
-				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(trackLeftCurrentVelocity))
+				trackLeft(trackLeftCurrentVelocity) # Set left track motion
 			elif stateTracksLeft == 'sm':
-				if stateLeftTracksCurrentVelocity == 0:
+				if trackLeftCurrentVelocity == 0:
 					trackLeft(0) # Stop all left track motion
 					printToLogDebug(windowLog, 'Left track stopped')
 					stateTracksLeft = 'nc'
 				else:
-					trackLeftSpeed(abs(stateLeftTracksCurrentVelocity)) # Set left track PWM speed to stateLeftTracksCurrentVelocity
-					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(stateLeftTracksCurrentVelocity))
+					trackLeftSpeed(abs(trackLeftCurrentVelocity)) # Set left track PWM speed to trackLeftCurrentVelocity
+					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(trackLeftCurrentVelocity))
 			elif stateTracksLeft == 'fa':
-				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
-				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
+				printToLogDebug(windowLog, 'Left track velocity: ' + str(trackLeftCurrentVelocity))
+				trackLeft(trackLeftCurrentVelocity) # Set left track motion
 
 			if stateTracksRight == 'ba':
-				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
-				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(trackRightCurrentVelocity))
+				trackRight(trackRightCurrentVelocity) # Set right track motion
 			elif stateTracksRight == 'sm':
-				if stateRightTracksCurrentVelocity == 0:
+				if trackRightCurrentVelocity == 0:
 					trackRight(0) # Stop all right track motion
 					printToLogDebug(windowLog, 'Right track stopped')
 					stateTracksRight = 'nc'
 				else:
-					trackRightSpeed(abs(stateRightTracksCurrentVelocity)) # Set right track PWM speed to stateRightTracksCurrentVelocity
-					printToLogDebug(windowLog, 'Right track stopping. Velocity: ' + str(stateRightTracksCurrentVelocity))
+					trackRightSpeed(abs(trackRightCurrentVelocity)) # Set right track PWM speed to trackRightCurrentVelocity
+					printToLogDebug(windowLog, 'Right track stopping. Velocity: ' + str(trackRightCurrentVelocity))
 			elif stateTracksRight == 'fa':
-				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
-				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
+				printToLogDebug(windowLog, 'Right track velocity: ' + str(trackRightCurrentVelocity))
+				trackRight(trackRightCurrentVelocity) # Set right track motion
 
 			if stateTurretHoriz == 'ba':
 				printToLogDebug(windowLog, 'Turret horiz left')
@@ -634,8 +634,8 @@ def main_curses(stdscr):
 					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
-					stateLeftTracksCurrentVelocity = 0
-					stateRightTracksCurrentVelocity = 0
+					trackLeftCurrentVelocity = 0
+					trackRightCurrentVelocity = 0
 					stateTracksLeft = 'sm' # Set state variables to their non-functional values
 					stateTracksRight = 'sm'
 					stateTurretHoriz = 'sm'
@@ -670,8 +670,8 @@ def main_curses(stdscr):
 					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
-					stateLeftTracksCurrentVelocity = 0
-					stateRightTracksCurrentVelocity = 0
+					trackLeftCurrentVelocity = 0
+					trackRightCurrentVelocity = 0
 					stateTracksLeft = 'sm' # Set state variables to their non-functional values
 					stateTracksRight = 'sm'
 					stateTurretHoriz = 'sm'
@@ -719,13 +719,13 @@ def main_curses(stdscr):
 						stateTracksRight = 'ba'
 				# WXRV	keys
 				elif key == ord('w'): # W - Slightly increase velocity of left track. Track will not go faster than stateLeftTracksTargetSpeed
-					stateLeftTracksCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
+					trackLeftCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
 				elif key == ord('x'): # W - Slightly decrease velocity of left track.
-					stateLeftTracksCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
+					trackLeftCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
 				elif key == ord('r'): # W - Slightly increase velocity of right track. Track will not go faster than stateLeftTracksTargetSpeed
-					stateRightTracksCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
+					trackRightCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
 				elif key == ord('v'): # W - Slightly decrease velocity of right track.
-					stateRightTracksCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
+					trackRightCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
 				
 				#QATG keys
 				elif key == ord('q'): # Q - Turn left. Right track forward
