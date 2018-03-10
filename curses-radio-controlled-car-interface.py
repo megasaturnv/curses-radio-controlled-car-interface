@@ -25,6 +25,9 @@ TRACK_LEFT_SPEED_3_PWM  = 255
 TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 80 # Acceleration in (PWM units / second) for left track
 TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 80 # Acceleration in (PWM units / second) for right track
 
+TRACK_LEFT_TWEAK_VELOCITY_AMOUNT = 40
+TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT = 40
+
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
 
@@ -402,7 +405,7 @@ def printToLogDebug(windowLog, text):
 def main_curses(stdscr):
 	# Global variables
 	global mainLoop
-	global stateTracksLeft, stateTracksRight, stateTurretHoriz, stateTurretVert, stateBBGunFiring, stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
+	global stateLeftTracksTargetSpeed, stateRightTracksTargetSpeed, stateTracksAcceleration # Global variables - Vehicle states
 	if not FAKE_AN_ARDUINO: # Global variables - Nanpy
 		global aa, at
 
@@ -417,16 +420,24 @@ def main_curses(stdscr):
 	stateCameraIRModified           = True
 	stateBBGunFiring                = False
 
-	stateTracksLeft  = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-	stateTracksRight = 0 # Direction track is trying to move. 0 = stop motor. -1 = backwards.      1 = forwards.  1000 = null state, no command sent to Arduino.
-	stateTurretHoriz = 0 # Direction track is trying to move. 0 = stop motor. -1 = anti-clockwise. 1 = clockwise. 1000 = null state, no command sent to Arduino.
-	stateTurretVert  = 0 # Direction track is trying to move. 0 = stop motor. -1 = down.           1 = up.        1000 = null state, no command sent to Arduino.
-	stateLeftTracksCurrentVelocity  = 0
-	stateRightTracksCurrentVelocity = 0
+	# Current state of tracks and turret motors
+	# 'ba' = Backwards (Accelerating - speed and directions sent to Arduino)
+	# 'bc' = Backwards (Cruising - speed updates only sent to Arduino)
+	# 'sm' = Stop motor (Accelerating)
+	# 'sc' = Stopped motor (Cruising)
+	# 'fa' = Forwards (Accelerating)
+	# 'fc' = Forwards (Cruising)
+	# 'nc' = No change. No commands sent to Arduino. Motor controller will remain in current state (direction + speed)
+	stateTracksLeft  = 'sm'
+	stateTracksRight = 'sm'
+	stateTurretHoriz = 'sm'
+	stateTurretVert  = 'sm'
+	stateLeftTracksCurrentVelocity  = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
+	stateRightTracksCurrentVelocity = 0 # Current velocity of tracks between -255 and 255. Positive/Negative represents direction. Absolute number represents speed as PWM value.
 	trackAccelerationLastSet = time.time()
 
 	# Curses settings
-	#stdscr = curses.initscr() # setup intial window
+	#stdscr = curses.initscr() # setup initial window
 	#curses.start_color() # Enable curses colour
 	#curses.use_default_colors() # Use default curses colours
 	curses.noecho()        # Don't echo keystrokes
@@ -482,15 +493,15 @@ def main_curses(stdscr):
 				elapsedTime = time.time() - trackAccelerationLastSet # Calculate elapsed time in seconds since the last time the track's velocity was updated
 
 				# Velocity and acceleration calculation code - Left track
-				if stateTracksLeft == 1: # If track is trying to move forward
+				if stateTracksLeft == 'fa': # If track is accelerating forward
 					stateLeftTracksCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateLeftTracksCurrentVelocity
 					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
 						stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
-				elif stateTracksLeft == -1: # If track is trying to move backward
+				elif stateTracksLeft == 'ba': # If track is accelerating backward
 					stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
 					if abs(stateLeftTracksCurrentVelocity) > stateLeftTracksTargetSpeed: # If current speed is larger than target speed
 						stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
-				elif stateTracksLeft == 0: # If track is stopping / stopped
+				elif stateTracksLeft == 'sm': # If track is stopping / stopped
 					if stateLeftTracksCurrentVelocity > 0: # If stateLeftTracksCurrentVelocity is positive
 						stateLeftTracksCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateLeftTracksCurrentVelocity
 						if stateLeftTracksCurrentVelocity < 0: # If above calculation set stateLeftTracksCurrentVelocity to a negative value...
@@ -501,15 +512,15 @@ def main_curses(stdscr):
 							stateLeftTracksCurrentVelocity = 0 # Set stateLeftTracksCurrentVelocity to 0
 
 				# Velocity and acceleration calculation code - Right track
-				if stateTracksRight == 1: # If track is trying to move forward
+				if stateTracksRight == 'fa': # If track is accelerating forward
 					stateRightTracksCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to stateRightTracksCurrentVelocity
 					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
 						stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
-				elif stateTracksRight == -1: # If track is trying to move backward
+				elif stateTracksRight == 'ba': # If track is accelerating backward
 					stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
 					if abs(stateRightTracksCurrentVelocity) > stateRightTracksTargetSpeed: # If current speed is larger than target speed
 						stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
-				elif stateTracksRight == 0: # If track is stopping / stopped
+				elif stateTracksRight == 'sm': # If track is stopping / stopped
 					if stateRightTracksCurrentVelocity > 0: # If stateRightTracksCurrentVelocity is positive
 						stateRightTracksCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from stateRightTracksCurrentVelocity
 						if stateRightTracksCurrentVelocity < 0: # If above calculation set stateRightTracksCurrentVelocity to a negative value...
@@ -521,73 +532,73 @@ def main_curses(stdscr):
 
 			elif stateTracksAcceleration == 2: # If stateTracksAcceleration == 2...
 				# Left tracks
-				if stateTracksLeft == 1: # If track is trying to move forward...
+				if stateTracksLeft == 'fa': # If track is accelerating forward...
 					stateLeftTracksCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed instantly
-				if stateTracksLeft == -1: # If track is trying to move backward...
+				if stateTracksLeft == 'ba': # If track is accelerating backward...
 					stateLeftTracksCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
-				elif stateTracksLeft == 0: # If track is stopping / stopped...
+				elif stateTracksLeft == 'sm': # If track is stopping / stopped...
 					stateLeftTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
 
 				# Right tracks
-				if stateTracksRight == 1: # If track is trying to move forward...
+				if stateTracksRight == 'fa': # If track is accelerating forward...
 					stateRightTracksCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed instantly
-				if stateTracksRight == -1: # If track is trying to move backward...
+				if stateTracksRight == 'ba': # If track is accelerating backward...
 					stateRightTracksCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
-				elif stateTracksRight == 0: # If track is stopping / stopped...
+				elif stateTracksRight == 'sm': # If track is stopping / stopped...
 					stateRightTracksCurrentVelocity = 0 # Set current velocity to 0 instantly
 
 			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
 			# Vehicle states checking code - tracks
-			if stateTracksLeft == -1:
+			if stateTracksLeft == 'ba':
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
 				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
-			elif stateTracksLeft == 0:
+			elif stateTracksLeft == 'sm':
 				if stateLeftTracksCurrentVelocity == 0:
 					trackLeft(0) # Stop all left track motion
 					printToLogDebug(windowLog, 'Left track stopped')
-					stateTracksLeft = 1000
+					stateTracksLeft = 'nc'
 				else:
-					trackLeftSpeed(abs(stateLeftTracksCurrentVelocity)) # Set left track pwm speed to stateLeftTracksCurrentVelocity
+					trackLeftSpeed(abs(stateLeftTracksCurrentVelocity)) # Set left track PWM speed to stateLeftTracksCurrentVelocity
 					printToLogDebug(windowLog, 'Left track stopping. Velocity: ' + str(stateLeftTracksCurrentVelocity))
-			elif stateTracksLeft == 1:
+			elif stateTracksLeft == 'fa':
 				printToLogDebug(windowLog, 'Left track velocity: ' + str(stateLeftTracksCurrentVelocity))
 				trackLeft(stateLeftTracksCurrentVelocity) # Set left track motion
 
-			if stateTracksRight == -1:
+			if stateTracksRight == 'ba':
 				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
 				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
-			elif stateTracksRight == 0:
+			elif stateTracksRight == 'sm':
 				if stateRightTracksCurrentVelocity == 0:
 					trackRight(0) # Stop all right track motion
 					printToLogDebug(windowLog, 'Right track stopped')
-					stateTracksRight = 1000
+					stateTracksRight = 'nc'
 				else:
-					trackRightSpeed(abs(stateRightTracksCurrentVelocity)) # Set right track pwm speed to stateRightTracksCurrentVelocity
+					trackRightSpeed(abs(stateRightTracksCurrentVelocity)) # Set right track PWM speed to stateRightTracksCurrentVelocity
 					printToLogDebug(windowLog, 'Right track stopping. Velocity: ' + str(stateRightTracksCurrentVelocity))
-			elif stateTracksRight == 1:
+			elif stateTracksRight == 'fa':
 				printToLogDebug(windowLog, 'Right track velocity: ' + str(stateRightTracksCurrentVelocity))
 				trackRight(stateRightTracksCurrentVelocity) # Set right track motion
 
-			if stateTurretHoriz == -1:
+			if stateTurretHoriz == 'ba':
 				printToLogDebug(windowLog, 'Turret horiz left')
 				turretLeft(TURRET_LEFT_SPEED_PWM) # Set turret horizontal motion
-			elif stateTurretHoriz == 0:
+			elif stateTurretHoriz == 'sm':
 				printToLogDebug(windowLog, 'Turret horiz stopped')
 				turretXStop() # Stop all horizontal turret motion
-				stateTurretHoriz = 1000
-			elif stateTurretHoriz == 1:
+				stateTurretHoriz = 'nc'
+			elif stateTurretHoriz == 'fa':
 				printToLogDebug(windowLog, 'Turret horiz right')
 				turretRight(TURRET_RIGHT_SPEED_PWM) # Set turret horizontal motion
 
-			if stateTurretVert == -1:
+			if stateTurretVert == 'ba':
 				printToLogDebug(windowLog, 'Turret vert down')
 				turretDown(TURRET_DOWN_SPEED_PWM) # Set turret vertical motion
-			elif stateTurretVert == 0:
+			elif stateTurretVert == 'sm':
 				printToLogDebug(windowLog, 'Turret vert stopped')
 				turretYStop() # Stop all vertical turret motion
-				stateTurretVert = 1000
-			elif stateTurretVert == 1:
+				stateTurretVert = 'nc'
+			elif stateTurretVert == 'fa':
 				printToLogDebug(windowLog, 'Turret vert up')
 				turretUp(TURRET_UP_SPEED_PWM) # Set turret vertical motion
 
@@ -623,12 +634,12 @@ def main_curses(stdscr):
 					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
-					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
-					stateTracksRight = 0
 					stateRightTracksCurrentVelocity = 0
-					stateTurretHoriz = 0
-					stateTurretVert = 0
+					stateTracksLeft = 'sm' # Set state variables to their non-functional values
+					stateTracksRight = 'sm'
+					stateTurretHoriz = 'sm'
+					stateTurretVert = 'sm'
 					stateHullIndicatorLeft          = False
 					stateHullIndicatorLeftModified  = True
 					stateHullIndicatorRight         = False
@@ -659,12 +670,12 @@ def main_curses(stdscr):
 					rpiGpioSetupPinsState()
 					rpiGpioSetupPinsMode()
 
-					stateTracksLeft = 0 # Set state variables to their non-functional values
 					stateLeftTracksCurrentVelocity = 0
-					stateTracksRight = 0
 					stateRightTracksCurrentVelocity = 0
-					stateTurretHoriz = 0
-					stateTurretVert = 0
+					stateTracksLeft = 'sm' # Set state variables to their non-functional values
+					stateTracksRight = 'sm'
+					stateTurretHoriz = 'sm'
+					stateTurretVert = 'sm'
 					stateHullIndicatorLeft          = False
 					stateHullIndicatorLeftModified  = True
 					stateHullIndicatorRight         = False
@@ -677,74 +688,86 @@ def main_curses(stdscr):
 
 				elif key == 32: # Space bar - fire BB gun
 					stateBBGunFiring = True
-				elif key == ord('q'): # Q - Turn left. Right track forward
-					if stateTracksRight == 1:
-						stateTracksRight = 0
-					else:
-						stateTracksRight = 1
-				elif key == ord('a'): # A - Turn left. Left track backward
-					if stateTracksLeft == -1:
-						stateTracksLeft = 0
-					else:
-						stateTracksLeft = -1
+				# ESDF keys
 				elif key == ord('e'): # E - Both tracks forward
-					if stateTracksLeft == 1 and stateTracksRight == 1:
-						stateTracksLeft = 0
-						stateTracksRight = 0
+					if (stateTracksLeft == 'fa' or stateTracksLeft == 'fc') and (stateTracksRight == 'fa' or stateTracksRight == 'fc'):
+						stateTracksLeft = 'sm'
+						stateTracksRight = 'sm'
 					else:
-						stateTracksLeft = 1
-						stateTracksRight = 1
+						stateTracksLeft = 'fa'
+						stateTracksRight = 'fa'
 				elif key == ord('s'): # S - Hard turn left. Left track backwards. Right track forwards
-					if stateTracksLeft == -1 and stateTracksRight == 1:
-						stateTracksLeft = 0
-						stateTracksRight = 0
+					if stateTracksLeft == 'ba' and stateTracksRight == 'fa':
+						stateTracksLeft = 'sm'
+						stateTracksRight = 'sm'
 					else:
-						stateTracksLeft = -1
-						stateTracksRight = 1
+						stateTracksLeft = 'ba'
+						stateTracksRight = 'fa'
 				elif key == ord('d'): # D - Both tracks backward
-					if stateTracksLeft == -1 and stateTracksRight == -1:
-						stateTracksLeft = 0
-						stateTracksRight = 0
+					if stateTracksLeft == 'ba' and stateTracksRight == 'ba':
+						stateTracksLeft = 'sm'
+						stateTracksRight = 'sm'
 					else:
-						stateTracksLeft = -1
-						stateTracksRight = -1
+						stateTracksLeft = 'ba'
+						stateTracksRight = 'ba'
 				elif key == ord('f'): # F - Hard Turn right. Right track forwards. Left track backwards
-					if stateTracksLeft == 1 and stateTracksRight == -1:
-						stateTracksLeft = 0
-						stateTracksRight = 0
+					if stateTracksLeft == 'fa' and stateTracksRight == 'ba':
+						stateTracksLeft = 'sm'
+						stateTracksRight = 'sm'
 					else:
-						stateTracksLeft = 1
-						stateTracksRight = -1
+						stateTracksLeft = 'fa'
+						stateTracksRight = 'ba'
+				# WXRV	keys
+				elif key == ord('w'): # W - Slightly increase velocity of left track. Track will not go faster than stateLeftTracksTargetSpeed
+					stateLeftTracksCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
+				elif key == ord('x'): # W - Slightly decrease velocity of left track.
+					stateLeftTracksCurrentVelocity += TRACK_LEFT_TWEAK_VELOCITY_AMOUNT
+				elif key == ord('r'): # W - Slightly increase velocity of right track. Track will not go faster than stateLeftTracksTargetSpeed
+					stateRightTracksCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
+				elif key == ord('v'): # W - Slightly decrease velocity of right track.
+					stateRightTracksCurrentVelocity += TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT
+				
+				#QATG keys
+				elif key == ord('q'): # Q - Turn left. Right track forward
+					if stateTracksRight == 'fa':
+						stateTracksRight = 'sm'
+					else:
+						stateTracksRight = 'fa'
+				elif key == ord('a'): # A - Turn left. Left track backward
+					if stateTracksLeft == 'ba':
+						stateTracksLeft = 'sm'
+					else:
+						stateTracksLeft = 'ba'
 				elif key == ord('t'): # T - Turn right. Left track forward
-					if stateTracksLeft == 1:
-						stateTracksLeft = 0
+					if stateTracksLeft == 'fa':
+						stateTracksLeft = 'sm'
 					else:
-						stateTracksLeft = 1
+						stateTracksLeft = 'fa'
 				elif key == ord('g'): # G - Turn right. Right track backward
-					if stateTracksRight == -1:
-						stateTracksRight = 0
+					if stateTracksRight == 'ba':
+						stateTracksRight = 'sm'
 					else:
-						stateTracksRight = -1
+						stateTracksRight = 'ba'
 				elif key == ord('i'): # I - Turret up
-					if stateTurretVert == 1:
-						stateTurretVert = 0
+					if stateTurretVert == 'fa':
+						stateTurretVert = 'sm'
 					else:
-						stateTurretVert = 1
+						stateTurretVert = 'fa'
 				elif key == ord('j'): # J - Turret left
-					if stateTurretHoriz == -1:
-						stateTurretHoriz = 0
+					if stateTurretHoriz == 'ba':
+						stateTurretHoriz = 'sm'
 					else:
-						stateTurretHoriz = -1
+						stateTurretHoriz = 'ba'
 				elif key == ord('k'): # K - Turret down
-					if stateTurretVert == -1:
-						stateTurretVert = 0
+					if stateTurretVert == 'ba':
+						stateTurretVert = 'sm'
 					else:
-						stateTurretVert = -1
+						stateTurretVert = 'ba'
 				elif key == ord('l'): # L - Turret right
-					if stateTurretHoriz == 1:
-						stateTurretHoriz = 0
+					if stateTurretHoriz == 'fa':
+						stateTurretHoriz = 'sm'
 					else:
-						stateTurretHoriz = 1
+						stateTurretHoriz = 'fa'
 				elif key == ord('1'): # 1 - Set tracks to slowest top speed
 					stateLeftTracksTargetSpeed = TRACK_LEFT_SPEED_1_PWM
 					stateRightTracksTargetSpeed = TRACK_RIGHT_SPEED_1_PWM
@@ -789,22 +812,22 @@ def main_curses(stdscr):
 		print('Current size is ' + str(x) + ' rows by ' + str(y) + ' lines')
 
 if __name__ == "__main__":
-	try:
-		curses.wrapper(main_curses)
-	except Exception as e:
-	#except RuntimeError as e:
-		arduinoResetPins()
-		rpiGpioResetPins()
-		print('Exception')
-		print(e)
-	except KeyboardInterrupt as e:
-		arduinoResetPins()
-		rpiGpioResetPins()
-		print('KeyboardInterrupt')
-		print(e)
-	except:
-		arduinoResetPins()
-		rpiGpioResetPins()
-
-	arduinoResetPins()
-	rpiGpioResetPins()
+#	try:
+	curses.wrapper(main_curses)
+#	except Exception as e:
+#	#except RuntimeError as e:
+#		arduinoResetPins()
+#		rpiGpioResetPins()
+#		print('Exception')
+#		print(e)
+#	except KeyboardInterrupt as e:
+#		arduinoResetPins()
+#		rpiGpioResetPins()
+#		print('KeyboardInterrupt')
+#		print(e)
+#	except:
+#		arduinoResetPins()
+#		rpiGpioResetPins()
+#
+#	arduinoResetPins()
+#	rpiGpioResetPins()
