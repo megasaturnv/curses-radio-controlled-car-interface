@@ -8,9 +8,15 @@ E = Both tracks forward
 S = Right track forward. Left track backward
 D = Both tracks backward
 F = Left track forward. Right track backward
-Q = Right track forward
+
+W = Increase left track velocity slightly
+X = Decrease left track velocity slightly
+R = Increase right track velocity slightly
+V = Decrease right track velocity slightly
+
+Q = Left track forward
 A = Left track backward
-T = Left track forward
+T = Right track forward
 G = Right track backward
 
 I = Turret up
@@ -24,11 +30,11 @@ L = Turret right
 4 = Turn on slow acceleration mode
 5 = Turn off slow acceleration mode (default)
 
-6 = Function key 6. Not implemented
-7 = Function key 7. Not implemented
-8 = Function key 8. Not implemented
-9 = Function key 9. Not implemented
-0 = Function key 0. Not implemented
+6 = Function key 6. Not implemented (Will be left indicator)
+7 = Function key 7. Not implemented (Will be right indicator)
+8 = Function key 8. Not implemented (Will toggle the turret LEDs)
+9 = Function key 9. Not implemented (Will Toggle IR LEDs)
+0 = Function key 0. Not implemented (Will fire BB gun)
 ```
 ## Libraries Used
 * Python Curses
