@@ -753,23 +753,23 @@ def main_curses(stdscr):
 					stateTracksRight = 'sc'
 
 				#QATG keys
-				elif key == ord('q'): # Q - Turn left. Right track forward
-					if stateTracksRight == 'fa':
-						stateTracksRight = 'sm'
-					else:
-						stateTracksRight = 'fa'
-				elif key == ord('a'): # A - Turn left. Left track backward
-					if stateTracksLeft == 'ba':
-						stateTracksLeft = 'sm'
-					else:
-						stateTracksLeft = 'ba'
-				elif key == ord('t'): # T - Turn right. Left track forward
-					if stateTracksLeft == 'fa':
+				elif key == ord('q'): # Q - Left track forward
+					if trackLeftCurrentVelocity > 0:
 						stateTracksLeft = 'sm'
 					else:
 						stateTracksLeft = 'fa'
-				elif key == ord('g'): # G - Turn right. Right track backward
-					if stateTracksRight == 'ba':
+				elif key == ord('a'): # A - Left track backward
+					if trackLeftCurrentVelocity < 0:
+						stateTracksLeft = 'sm'
+					else:
+						stateTracksLeft = 'ba'
+				elif key == ord('t'): # T - Right track forward
+					if trackRightCurrentVelocity > 0:
+						stateTracksRight = 'sm'
+					else:
+						stateTracksRight = 'fa'
+				elif key == ord('g'): # G - Right track backward
+					if trackRightCurrentVelocity < 0:
 						stateTracksRight = 'sm'
 					else:
 						stateTracksRight = 'ba'
