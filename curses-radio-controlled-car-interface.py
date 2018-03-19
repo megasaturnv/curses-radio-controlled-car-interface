@@ -492,9 +492,15 @@ def main_curses(stdscr):
 
 				# Velocity and acceleration calculation code - Left track
 				if stateTracksLeft == 'fa': # If track is accelerating forward
-					trackLeftCurrentVelocity += int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackLeftCurrentVelocity
+					if abs(trackLeftCurrentVelocity) <= stateLeftTracksTargetSpeed: # If current speed is smaller than or equal to target speed
+						trackLeftCurrentVelocity += min(abs(stateLeftTracksTargetSpeed - trackLeftCurrentVelocity), int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Increase current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
+					else: # Else (if current speed is larger than the target speed)
+						trackLeftCurrentVelocity -= min(abs(stateLeftTracksTargetSpeed - trackLeftCurrentVelocity), int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Decrease current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
 				elif stateTracksLeft == 'ba': # If track is accelerating backward
-					trackLeftCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackLeftCurrentVelocity
+					if abs(trackLeftCurrentVelocity) <= stateLeftTracksTargetSpeed: # If current speed is smaller than or equal to target speed
+						trackLeftCurrentVelocity -= min(abs(-stateLeftTracksTargetSpeed - trackLeftCurrentVelocity), int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Decrease current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
+					else: # Else (if current speed is larger than the target speed)
+						trackLeftCurrentVelocity += min(abs(-stateLeftTracksTargetSpeed - trackLeftCurrentVelocity), int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Increase current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
 				elif stateTracksLeft == 'sm': # If track is stopping / stopped
 					if trackLeftCurrentVelocity > 0: # If trackLeftCurrentVelocity is positive
 						trackLeftCurrentVelocity -= int(TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackLeftCurrentVelocity
@@ -507,9 +513,15 @@ def main_curses(stdscr):
 
 				# Velocity and acceleration calculation code - Right track
 				if stateTracksRight == 'fa': # If track is accelerating forward
-					trackRightCurrentVelocity += int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Add TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime to trackRightCurrentVelocity
+					if abs(trackRightCurrentVelocity) <= stateRightTracksTargetSpeed: # If current speed is smaller than or equal to target speed
+						trackRightCurrentVelocity += min(abs(stateRightTracksTargetSpeed - trackRightCurrentVelocity), int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Increase current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
+					else: # Else (if current speed is larger than the target speed)
+						trackRightCurrentVelocity -= min(abs(stateRightTracksTargetSpeed - trackRightCurrentVelocity), int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Decrease current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
 				elif stateTracksRight == 'ba': # If track is accelerating backward
-					trackRightCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackRightCurrentVelocity
+					if abs(trackRightCurrentVelocity) <= stateRightTracksTargetSpeed: # If current speed is smaller than or equal to target speed
+						trackRightCurrentVelocity -= min(abs(-stateRightTracksTargetSpeed - trackRightCurrentVelocity), int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Decrease current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
+					else: # Else (if current speed is larger than the target speed)
+						trackRightCurrentVelocity += min(abs(-stateRightTracksTargetSpeed - trackRightCurrentVelocity), int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime)) # Increase current velocity until the speed change to the target speed is a larger number than TRACK_LEFT_SLOW_ACCELERATION_FACTOR * elapsedTime
 				elif stateTracksRight == 'sm': # If track is stopping / stopped
 					if trackRightCurrentVelocity > 0: # If trackRightCurrentVelocity is positive
 						trackRightCurrentVelocity -= int(TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime) # Subtract TRACK_RIGHT_SLOW_ACCELERATION_FACTOR * elapsedTime from trackRightCurrentVelocity
@@ -528,6 +540,11 @@ def main_curses(stdscr):
 					trackLeftCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed instantly
 				elif stateTracksLeft == 'sm': # If track is stopping / stopped...
 					trackLeftCurrentVelocity = 0 # Set current velocity to 0 instantly
+				# Check if left tracks are going too fast
+				if trackLeftCurrentVelocity > stateLeftTracksTargetSpeed: # If current velocity is larger than target speed
+					trackLeftCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
+				if trackLeftCurrentVelocity < -stateLeftTracksTargetSpeed: # If current velocity is smaller than negative target speed
+					trackLeftCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
 
 				# Right tracks
 				if stateTracksRight == 'fa': # If track is accelerating forward...
@@ -536,22 +553,14 @@ def main_curses(stdscr):
 					trackRightCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed instantly
 				elif stateTracksRight == 'sm': # If track is stopping / stopped...
 					trackRightCurrentVelocity = 0 # Set current velocity to 0 instantly
+				# Check if right tracks are going too fast
+				if trackRightCurrentVelocity > stateRightTracksTargetSpeed: # If current velocity is larger than target speed
+					trackRightCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
+				if trackRightCurrentVelocity < -stateRightTracksTargetSpeed: # If current velocity is smaller than negative target speed
+					trackRightCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
 
 			trackAccelerationLastSet = time.time() # Set trackAccelerationLastSet to current Unix time
 
-
-			# Check if tracks are going too fast
-			# Left tracks
-			if trackLeftCurrentVelocity > stateLeftTracksTargetSpeed: # If current velocity is larger than target speed
-				trackLeftCurrentVelocity = stateLeftTracksTargetSpeed # Set current velocity to positive target speed
-			if trackLeftCurrentVelocity < -stateLeftTracksTargetSpeed: # If current velocity is smaller than negative target speed
-				trackLeftCurrentVelocity = -stateLeftTracksTargetSpeed # Set current velocity to negative target speed
-
-			# Right tracks
-			if trackRightCurrentVelocity > stateRightTracksTargetSpeed: # If current velocity is larger than target speed
-				trackRightCurrentVelocity = stateRightTracksTargetSpeed # Set current velocity to positive target speed
-			if trackRightCurrentVelocity < -stateRightTracksTargetSpeed: # If current velocity is smaller than negative target speed
-				trackRightCurrentVelocity = -stateRightTracksTargetSpeed # Set current velocity to negative target speed
 
 			# Vehicle states checking code - tracks
 			if stateTracksLeft == 'sc':
