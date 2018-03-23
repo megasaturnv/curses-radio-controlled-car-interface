@@ -1,0 +1,30 @@
+How to stream live video with low-latency
+
+On Raspberry Pi:
+	Stop motion service: (Or any other processes which are using the Raspberry Pi camera and /dev/video0)
+		service motion stop
+
+	Raspberry Pi Driver Camera:
+		Low resolution:
+			raspivid -t 0 -w 640 -h 480 -rot 180 -ih -fps 20 -o - | nc -k -l 8081
+		Medium resolution:
+			raspivid -t 0 -w 1280 -h 960 -rot 180 -ih -fps 20 -o - | nc -k -l 8081
+		High resolution:
+			raspivid -t 0 -w 1920 -h 1080 -rot 180 -ih -fps 20 -o - | nc -k -l 8081
+
+	USB Turret Camera: (testing - WIP)
+		cat /dev/video0 | nc -k -l 8082
+		avconv -f video4linux2 -i /dev/video0 pipe:. | nc -k -l 8082
+
+		http://fomori.org/blog/?p=1213
+		https://trac.ffmpeg.org/wiki/StreamingGuide
+		https://ffmpeg.zeranoe.com/forum/viewtopic.php?t=2421
+
+On PC:
+	Raspberry Pi Driver Camera:
+		mplayer -fps 200 -demuxer h264es ffmpeg://tcp://192.168.1.22:8081
+	USB Turret Camera:
+		mplayer -fps 200 -demuxer h264es ffmpeg://tcp://192.168.1.22:8082
+
+To Do:
+	Test UDP vs TCP quality / latency with 'nc -u'
