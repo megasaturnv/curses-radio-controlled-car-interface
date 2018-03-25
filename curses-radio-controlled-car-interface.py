@@ -5,7 +5,7 @@
 ##########################
 
 # Debug settings
-KEY_POLL_INTERVAL     = 0.5  # Time delay in seconds between polling the user for key presses which control the vehicle
+KEY_POLL_INTERVAL     = 0.2  # Time delay in seconds between polling the user for key presses which control the vehicle
 DEBUG_VERBOSE_MODE    = True # Display extra information in the log
 FAKE_AN_ARDUINO       = True # Fake an Arduino on the serial port. This setting disables Nanpy
 FAKE_RASPBERRYPI_GPIO = True # Fake Raspberry Pi GPIO pins. This setting disables RPi.GPIO
@@ -25,8 +25,8 @@ TRACK_LEFT_SPEED_3_PWM  = 255
 TRACK_LEFT_SLOW_ACCELERATION_FACTOR  = 80 # Acceleration in (PWM units / second) for left track
 TRACK_RIGHT_SLOW_ACCELERATION_FACTOR = 80 # Acceleration in (PWM units / second) for right track
 
-TRACK_LEFT_TWEAK_VELOCITY_AMOUNT = 10
-TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT = 10
+TRACK_LEFT_TWEAK_VELOCITY_AMOUNT = 25
+TRACK_RIGHT_TWEAK_VELOCITY_AMOUNT = 25
 
 # Nanpy settings
 SERIAL_PORT = '/dev/serial0' # Serial port where the Arudino is located for Nanpy
